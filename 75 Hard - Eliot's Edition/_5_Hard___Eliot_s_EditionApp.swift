@@ -9,24 +9,16 @@ import SwiftUI
 import SwiftData
 
 @main
-struct SeventyFiveHardEliotsEditionApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
+struct LockInApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
+                .onAppear {
+                    Task {
+                        await NotificationManager.shared.requestPermission()
+                    }
+                }
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(for: [DailyChecklist.self, JournalEntry.self])
     }
 }
