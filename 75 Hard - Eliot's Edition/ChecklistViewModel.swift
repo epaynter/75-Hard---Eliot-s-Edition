@@ -41,7 +41,12 @@ class ChecklistViewModel: ObservableObject {
     }
     
     func loadTodaysData() {
-        guard let modelContext = modelContext else { return }
+        guard let modelContext = modelContext else { 
+            print("❌ ModelContext is nil in ChecklistViewModel")
+            return 
+        }
+        
+        print("✅ Loading today's checklist data...")
         
         let today = Calendar.current.startOfDay(for: Date())
         let predicate = #Predicate<DailyChecklist> { checklist in
@@ -53,9 +58,11 @@ class ChecklistViewModel: ObservableObject {
         do {
             let checklists = try modelContext.fetch(descriptor)
             if let checklist = checklists.first {
+                print("✅ Found existing checklist for today")
                 currentChecklist = checklist
                 updatePublishedValues(from: checklist)
             } else {
+                print("✅ Creating new checklist for today")
                 // Create new checklist for today
                 let newChecklist = DailyChecklist(date: today)
                 modelContext.insert(newChecklist)
@@ -63,7 +70,7 @@ class ChecklistViewModel: ObservableObject {
                 try modelContext.save()
             }
         } catch {
-            print("Error loading today's checklist: \(error)")
+            print("❌ Error loading today's checklist: \(error)")
         }
     }
     
