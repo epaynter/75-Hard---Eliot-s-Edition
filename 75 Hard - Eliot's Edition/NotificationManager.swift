@@ -166,7 +166,7 @@ class NotificationManager: ObservableObject {
     }
     
     private func cancelAllNotifications() async {
-        UNUserNotificationCenter.current().removeAllPendingNotifications()
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     }
     
     func disableNotifications() async {
