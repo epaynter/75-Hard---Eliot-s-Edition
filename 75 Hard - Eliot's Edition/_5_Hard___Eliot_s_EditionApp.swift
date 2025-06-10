@@ -1,10 +1,15 @@
-//___FILEHEADER___
+//
+//  _5_Hard___Eliot_s_EditionApp.swift
+//  75 Hard - Eliot's Edition
+//
+//  Created by Eliot Paynter on 6/10/25.
+//
 
 import SwiftUI
 import SwiftData
 
 @main
-struct ___PACKAGENAME:identifier___App: App {
+struct SeventyFiveHardEliotsEditionApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
