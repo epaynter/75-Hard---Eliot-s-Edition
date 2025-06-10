@@ -137,13 +137,14 @@ class JournalViewModel: ObservableObject {
         guard let modelContext = modelContext else { return }
         
         let today = Calendar.current.startOfDay(for: Date())
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
         let prompts = PromptManager.shared.getPromptsForDate(today)
         
         morningPrompt = prompts.morning
         eveningPrompt = prompts.evening
         
         let predicate = #Predicate<JournalEntry> { entry in
-            Calendar.current.isDate(entry.date, inSameDayAs: today)
+            entry.date >= today && entry.date < tomorrow
         }
         
         let descriptor = FetchDescriptor<JournalEntry>(predicate: predicate)

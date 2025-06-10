@@ -34,9 +34,6 @@ struct HomeView: View {
                         Text("Day \(currentDay) of 75")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                            .onAppear {
-                                print("✅ HomeView header appeared - Day \(currentDay)")
-                            }
                         
                         Text("LOCK IN")
                             .font(.title3)

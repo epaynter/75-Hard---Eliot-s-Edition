@@ -49,8 +49,10 @@ class ChecklistViewModel: ObservableObject {
         print("✅ Loading today's checklist data...")
         
         let today = Calendar.current.startOfDay(for: Date())
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        
         let predicate = #Predicate<DailyChecklist> { checklist in
-            Calendar.current.isDate(checklist.date, inSameDayAs: today)
+            checklist.date >= today && checklist.date < tomorrow
         }
         
         let descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
