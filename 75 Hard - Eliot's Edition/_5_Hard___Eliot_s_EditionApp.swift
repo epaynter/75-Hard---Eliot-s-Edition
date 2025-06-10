@@ -20,6 +20,12 @@ struct LockInApp: App {
                     }
                 }
         }
-        .modelContainer(for: [DailyChecklist.self, JournalEntry.self])
+        .modelContainer(for: [
+            DailyChecklist.self,
+            JournalEntry.self,
+            Supplement.self,
+            ChallengeSettings.self,
+            NotificationPreference.self
+        ])
     }
 }
