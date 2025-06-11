@@ -188,10 +188,9 @@ struct HomeView: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
                     
-                    if !viewModel.challengeSettings?.userAffirmation.isEmpty ?? true {
+                    if !(viewModel.challengeSettings?.userAffirmation.isEmpty ?? true) {
                         Text("Your Why: \"\(viewModel.challengeSettings?.userAffirmation ?? "")\"")
-                            .font(.body)
-                            .fontStyle(.italic)
+                            .font(.body.italic())
                             .multilineTextAlignment(.center)
                             .foregroundColor(.primary)
                             .padding(.horizontal)
@@ -294,7 +293,7 @@ struct HomeView: View {
             ProgressOverviewCard(viewModel: viewModel)
             
             // Daily Checklist
-            ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry)
+            ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry, showingPhotoDetail: $showingPhotoDetail)
             
             // Quick Actions
             QuickActionsCard(
@@ -426,6 +425,7 @@ struct ProgressOverviewCard: View {
 struct ChecklistCard: View {
     @ObservedObject var viewModel: ChecklistViewModel
     @Binding var showingWaterEntry: Bool
+    @Binding var showingPhotoDetail: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
