@@ -177,4 +177,11 @@ class NotificationManager: ObservableObject {
     func enableNotifications() async {
         await requestPermission()
     }
+    
+    // NEW: Add method that matches the expected interface
+    func requestNotificationPermission() {
+        Task {
+            await requestPermission()
+        }
+    }
 }

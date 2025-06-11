@@ -15,7 +15,7 @@ struct LockInApp: App {
     var body: some Scene {
         WindowGroup {
             if hasCompletedOnboarding {
-                ContentView()
+                HomeView()
                     .modelContainer(for: [
                         DailyChecklist.self,
                         JournalEntry.self,
@@ -41,13 +41,6 @@ struct LockInApp: App {
                     ])
             }
         }
-        .modelContainer(for: [
-            DailyChecklist.self,
-            JournalEntry.self,
-            Supplement.self,
-            ChallengeSettings.self,
-            NotificationPreference.self
-        ])
     }
 }
 
