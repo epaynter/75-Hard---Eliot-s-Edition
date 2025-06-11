@@ -252,16 +252,17 @@ struct DayDetailView: View {
     
     private func loadDayData() {
         let dayStart = Calendar.current.startOfDay(for: date)
+        let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
         
         // Load checklist
         let checklistPredicate = #Predicate<DailyChecklist> { checklist in
-            Calendar.current.isDate(checklist.date, inSameDayAs: dayStart)
+            checklist.date >= dayStart && checklist.date < dayEnd
         }
         let checklistDescriptor = FetchDescriptor<DailyChecklist>(predicate: checklistPredicate)
         
         // Load journal
         let journalPredicate = #Predicate<JournalEntry> { entry in
-            Calendar.current.isDate(entry.date, inSameDayAs: dayStart)
+            entry.date >= dayStart && entry.date < dayEnd
         }
         let journalDescriptor = FetchDescriptor<JournalEntry>(predicate: journalPredicate)
         
@@ -323,8 +324,9 @@ class CalendarViewModel: ObservableObject {
             } else {
                 // Check if day was completed
                 let dayStart = calendar.startOfDay(for: date)
+                let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
                 let predicate = #Predicate<DailyChecklist> { checklist in
-                    Calendar.current.isDate(checklist.date, inSameDayAs: dayStart)
+                    checklist.date >= dayStart && checklist.date < dayEnd
                 }
                 let descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
                 
