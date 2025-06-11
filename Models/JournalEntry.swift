@@ -2,19 +2,20 @@ import Foundation
 import SwiftData
 
 @Model
-class JournalEntry {
+final class JournalEntry {
     @Attribute(.unique) var date: Date
-    var morningEntry: String
-    var eveningEntry: String
-    var weeklyPrompt: String
-    var weeklyResponse: String
+    var morningText: String = ""
+    var eveningText: String = ""
+    var morningPrompt: String = ""
+    var eveningPrompt: String = ""
+    var freeWriteText: String = ""
     
     // Relationship
     @Relationship(inverse: \DailyChecklist.journalEntry) var checklist: DailyChecklist?
     
     // Computed properties
     var hasEntries: Bool {
-        !morningEntry.isEmpty || !eveningEntry.isEmpty || !weeklyResponse.isEmpty
+        !morningText.isEmpty || !eveningText.isEmpty || !freeWriteText.isEmpty
     }
     
     var formattedDate: String {
@@ -25,17 +26,13 @@ class JournalEntry {
     
     init(
         date: Date,
-        morningEntry: String = "",
-        eveningEntry: String = "",
-        weeklyPrompt: String = "",
-        weeklyResponse: String = "",
+        morningPrompt: String = "",
+        eveningPrompt: String = "",
         checklist: DailyChecklist? = nil
     ) {
         self.date = date
-        self.morningEntry = morningEntry
-        self.eveningEntry = eveningEntry
-        self.weeklyPrompt = weeklyPrompt
-        self.weeklyResponse = weeklyResponse
+        self.morningPrompt = morningPrompt
+        self.eveningPrompt = eveningPrompt
         self.checklist = checklist
     }
 }

@@ -68,6 +68,12 @@ struct WaterEntryView: View {
                                 .font(.headline)
                                 .foregroundColor(.secondary)
                             
+                            // NEW: Show conversions
+                            Text(viewModel.waterGoalWithConversions)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                            
                             // Progress Bar
                             ZStack(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 12)

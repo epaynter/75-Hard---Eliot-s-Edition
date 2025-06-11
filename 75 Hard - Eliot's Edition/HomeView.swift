@@ -49,66 +49,151 @@ struct HomeView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Hero Header
-                        VStack(spacing: 16) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("DAY \(viewModel.currentDay)")
-                                        .font(.system(size: 48, weight: .black, design: .rounded))
-                                        .foregroundStyle(
-                                            LinearGradient(
-                                                colors: [.blue, .purple],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                        )
+                        // NEW: Check if challenge is in preview mode (future start date)
+                        if let settings = viewModel.challengeSettings, settings.hasFutureStart {
+                            // Preview Mode Layout
+                            VStack(spacing: 24) {
+                                // Preview Header
+                                VStack(spacing: 16) {
+                                    Image(systemName: "calendar.badge.clock")
+                                        .font(.system(size: 60))
+                                        .foregroundStyle(progressGradient)
                                     
-                                    Text("of \(viewModel.totalDays)")
+                                    Text("Your challenge starts in")
                                         .font(.title2)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.secondary)
-                                }
-                                
-                                Spacer()
-                                
-                                // Day Navigation
-                                DayNavigationControls(viewModel: viewModel) {
-                                    showingDayNavigation = true
-                                }
-                            }
-                            
-                            // Challenge Title & Motivation
-                            VStack(spacing: 8) {
-                                Text("🔥 LOCK IN 🔥")
-                                    .font(.title)
-                                    .fontWeight(.black)
-                                    .tracking(3)
-                                
-                                if !Calendar.current.isDateInToday(viewModel.selectedDate) {
-                                    Text(viewModel.selectedDate, style: .date)
-                                        .font(.headline)
+                                    
+                                    Text("\(settings.daysUntilStart)")
+                                        .font(.system(size: 72, weight: .black, design: .rounded))
+                                        .foregroundStyle(progressGradient)
+                                    
+                                    Text(settings.daysUntilStart == 1 ? "day" : "days")
+                                        .font(.title)
+                                        .fontWeight(.bold)
                                         .foregroundColor(.secondary)
+                                    
+                                    VStack(spacing: 8) {
+                                        Text("Start Date: \(settings.startDate, style: .date)")
+                                            .font(.headline)
+                                            .foregroundColor(.secondary)
+                                        
+                                        if !settings.userAffirmation.isEmpty {
+                                            Text("Your Why: \"\(settings.userAffirmation)\"")
+                                                .font(.body)
+                                                .fontStyle(.italic)
+                                                .multilineTextAlignment(.center)
+                                                .foregroundColor(.primary)
+                                                .padding(.horizontal)
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
+                                .padding(.top, 8)
+                                
+                                // Preview Challenge Overview
+                                PreviewChallengeCard()
+                                
+                                // Motivational Quote Section
+                                MotivationalCard()
+                                
+                                // Preview Actions
+                                VStack(spacing: 16) {
+                                    Button("Update Challenge Settings") {
+                                        showingSettings = true
+                                    }
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.blue)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.blue, lineWidth: 2)
+                                    )
+                                    
+                                    Button("Start Challenge Today") {
+                                        startChallengeToday()
+                                    }
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(progressGradient)
+                                            .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                                    )
+                                }
+                                .padding(.horizontal)
+                            }
+                        } else {
+                            // Regular Challenge Mode Layout (existing code)
+                            // Hero Header
+                            VStack(spacing: 16) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("DAY \(viewModel.currentDay)")
+                                            .font(.system(size: 48, weight: .black, design: .rounded))
+                                            .foregroundStyle(
+                                                LinearGradient(
+                                                    colors: [.blue, .purple],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                )
+                                            )
+                                        
+                                        Text("of \(viewModel.totalDays)")
+                                            .font(.title2)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Day Navigation
+                                    DayNavigationControls(viewModel: viewModel) {
+                                        showingDayNavigation = true
+                                    }
+                                }
+                                
+                                // Challenge Title & Motivation
+                                VStack(spacing: 8) {
+                                    // NEW: Rotating motivational messages instead of static "Lock In"
+                                    Text(getMotivationalMessage())
+                                        .font(.title)
+                                        .fontWeight(.black)
+                                        .tracking(3)
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(2)
+                                    
+                                    if !Calendar.current.isDateInToday(viewModel.selectedDate) {
+                                        Text(viewModel.selectedDate, style: .date)
+                                            .font(.headline)
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
                             }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            
+                            // Progress Overview
+                            ProgressOverviewCard(viewModel: viewModel)
+                            
+                            // Daily Checklist
+                            ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry)
+                            
+                            // Quick Actions
+                            QuickActionsCard(
+                                showingCamera: $showingCamera,
+                                showingJournal: $showingJournal,
+                                showingCalendar: $showingCalendar
+                            )
+                            
+                            // Motivational Quote Section
+                            MotivationalCard()
                         }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                        
-                        // Progress Overview
-                        ProgressOverviewCard(viewModel: viewModel)
-                        
-                        // Daily Checklist
-                        ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry)
-                        
-                        // Quick Actions
-                        QuickActionsCard(
-                            showingCamera: $showingCamera,
-                            showingJournal: $showingJournal,
-                            showingCalendar: $showingCalendar
-                        )
-                        
-                        // Motivational Quote Section
-                        MotivationalCard()
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 24)
@@ -139,21 +224,8 @@ struct HomeView: View {
                 SettingsView()
             }
             .sheet(isPresented: $showingCamera) {
-                PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                    VStack(spacing: 16) {
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(progressGradient)
-                        
-                        Text("Select Progress Photo")
-                            .font(.headline)
-                        
-                        Text("Choose a photo to track your 75 Hard transformation")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(40)
+                CameraFirstPhotoView(viewModel: viewModel) {
+                    showingPhotoDetail = true
                 }
             }
             .sheet(isPresented: $showingPhotoDetail) {
@@ -185,15 +257,46 @@ struct HomeView: View {
                 
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Are you sure you want to navigate to another day?")
+                Text("Navigate to view or edit another day's progress.")
             }
-            .onChange(of: selectedPhoto) { newPhoto in
-                if newPhoto != nil {
-                    viewModel.handlePhotoSelection()
-                    selectedPhoto = nil
-                    showingPhotoDetail = true
-                }
-            }
+        }
+    }
+    
+    // NEW: Generate rotating motivational messages
+    private func getMotivationalMessage() -> String {
+        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+        
+        let messages = [
+            "🔥 NO EXCUSES 🔥",
+            "💪 STAY HARD 💪", 
+            "⚡ DISCIPLINE = FREEDOM ⚡",
+            "🎯 LOCK IN 🎯",
+            "💎 MENTAL TOUGHNESS 💎",
+            "⚔️ WARRIOR MINDSET ⚔️",
+            "🚀 LEVEL UP 🚀",
+            "⛰️ CLIMB HIGHER ⛰️",
+            "🔥 EARN YOUR KEEP 🔥",
+            "💯 ALL IN 💯",
+            "⚡ NO WEAK LINKS ⚡",
+            "🎯 STAY FOCUSED 🎯",
+            "💪 PROVE YOURSELF 💪",
+            "🔥 DOMINATE TODAY 🔥"
+        ]
+        
+        return messages[dayOfYear % messages.count]
+    }
+    
+    // NEW: Start challenge immediately
+    private func startChallengeToday() {
+        guard let settings = viewModel.challengeSettings else { return }
+        settings.startDate = Date()
+        
+        do {
+            try modelContext.save()
+            viewModel.loadChallengeSettings()
+            viewModel.loadTodaysData()
+        } catch {
+            print("Error starting challenge today: \(error)")
         }
     }
 }
@@ -364,8 +467,34 @@ struct ChecklistCard: View {
                     color: .blue
                 ) {
                     withAnimation(.spring()) {
-                        viewModel.togglePhoto()
+                        if !viewModel.isPhotoLocked {
+                            viewModel.togglePhoto()
+                        }
                     }
+                }
+                
+                // NEW: Show view photo button if photo exists
+                if viewModel.hasPhoto, viewModel.isPhotoLocked {
+                    HStack {
+                        Spacer()
+                        Button("View Photo") {
+                            showingPhotoDetail = true
+                        }
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.blue.opacity(0.1))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .padding(.leading, 60) // Align with habit text
                 }
                 
                 // Journal
@@ -736,11 +865,17 @@ struct ModernQuickActionButton: View {
 
 struct MotivationalCard: View {
     private let quotes = [
-        "Discipline is choosing between what you want now and what you want most.",
-        "The pain of discipline weighs ounces. The pain of regret weighs tons.",
-        "Success is the sum of small efforts repeated day in and day out.",
-        "Don't put off tomorrow what you can do today.",
-        "Your body can stand it. It's your mind you have to convince."
+        // NEW: Real quotes from motivational leaders
+        "Stay hard! - David Goggins",
+        "Discipline equals freedom. - Jocko Willink", 
+        "The path to success is to take massive, determined actions. - Tony Robbins",
+        "You are in danger of living a life so comfortable and soft that you will die without ever realizing your true potential. - David Goggins",
+        "Good. - Jocko Willink",
+        "Extreme ownership. - Jocko Willink",
+        "Progress equals happiness. - Tony Robbins",
+        "The only person you are destined to become is the person you decide to be. - Ralph Waldo Emerson",
+        "Don't limit your challenges, challenge your limits. - Unknown",
+        "If you want to be uncommon amongst uncommon people, you have to be willing to do what they won't do. - David Goggins"
     ]
     
     var body: some View {
@@ -781,6 +916,268 @@ struct MotivationalCard: View {
                 )
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
         )
+    }
+}
+
+// NEW: Camera-first photo capture view
+struct CameraFirstPhotoView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: ChecklistViewModel
+    let onPhotoTaken: () -> Void
+    
+    @State private var showingCamera = false
+    @State private var showingGallery = false
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var isLoading = false
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 32) {
+                // Header
+                VStack(spacing: 16) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 60))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    
+                    Text("Progress Photo")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Text("Capture your transformation")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                if isLoading {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Processing photo...")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    VStack(spacing: 24) {
+                        // Camera Button (Primary)
+                        Button {
+                            showingCamera = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "camera")
+                                    .font(.title2)
+                                Text("Take Photo")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [.blue, .purple],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                            )
+                        }
+                        
+                        // Gallery Button (Secondary)
+                        Button {
+                            showingGallery = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "photo.on.rectangle")
+                                    .font(.title2)
+                                Text("Choose from Gallery")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(.blue)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.blue, lineWidth: 2)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color.blue.opacity(0.1))
+                                    )
+                            )
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 32)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+            .fullScreenCover(isPresented: $showingCamera) {
+                CameraView { image in
+                    isLoading = true
+                    processImage(image)
+                }
+            }
+            .photosPicker(isPresented: $showingGallery, selection: $selectedPhoto, matching: .images)
+            .onChange(of: selectedPhoto) { newPhoto in
+                if let newPhoto = newPhoto {
+                    isLoading = true
+                    processSelectedPhoto(newPhoto)
+                }
+            }
+        }
+    }
+    
+    private func processImage(_ image: UIImage) {
+        // Process camera image
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            viewModel.handlePhotoSelection()
+            isLoading = false
+            dismiss()
+            onPhotoTaken()
+        }
+    }
+    
+    private func processSelectedPhoto(_ photo: PhotosPickerItem) {
+        // Process gallery photo
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            viewModel.handlePhotoSelection()
+            selectedPhoto = nil
+            isLoading = false
+            dismiss()
+            onPhotoTaken()
+        }
+    }
+}
+
+// NEW: Simple camera view wrapper
+struct CameraView: UIViewControllerRepresentable {
+    let onImageCaptured: (UIImage) -> Void
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImageCaptured: onImageCaptured)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let onImageCaptured: (UIImage) -> Void
+        
+        init(onImageCaptured: @escaping (UIImage) -> Void) {
+            self.onImageCaptured = onImageCaptured
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                onImageCaptured(image)
+            }
+            picker.dismiss(animated: true)
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            picker.dismiss(animated: true)
+        }
+    }
+}
+
+// NEW: Preview challenge overview card
+struct PreviewChallengeCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Challenge Overview")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            VStack(spacing: 16) {
+                PreviewHabitRow(icon: "book.fill", title: "Read 10 pages daily", color: .green)
+                PreviewHabitRow(icon: "figure.run", title: "2 workouts per day", color: .red)
+                PreviewHabitRow(icon: "drop.fill", title: "1 gallon of water", color: .cyan)
+                PreviewHabitRow(icon: "camera.fill", title: "Daily progress photo", color: .blue)
+                PreviewHabitRow(icon: "moon.fill", title: "7+ hours sleep", color: .purple)
+                PreviewHabitRow(icon: "book.closed.fill", title: "Journal entry", color: .orange)
+                PreviewHabitRow(icon: "pills.fill", title: "Supplements (optional)", color: .green)
+            }
+            
+            VStack(spacing: 8) {
+                Text("💪 Get Ready to Transform")
+                    .font(.headline)
+                    .fontWeight(.black)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.orange, .red],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                
+                Text("When your challenge starts, you'll track all these habits daily. Use this time to prepare mentally and gather any materials you need.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
+    }
+}
+
+struct PreviewHabitRow: View {
+    let icon: String
+    let title: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(color)
+            }
+            
+            Text(title)
+                .font(.body)
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
+            
+            Spacer()
+            
+            Image(systemName: "checkmark.circle")
+                .font(.title3)
+                .foregroundColor(color.opacity(0.5))
+        }
+        .padding(.vertical, 4)
     }
 }
 
