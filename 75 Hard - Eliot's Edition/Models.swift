@@ -21,6 +21,7 @@ final class DailyChecklist {
     var photoPath: String?
     var weight: Double? // Optional weight entry for the day
     var photoNote: String = "" // Optional note with photo
+    var photoThumbnailData: Data? // Store thumbnail for quick display
     
     init(date: Date) {
         self.date = date
@@ -31,7 +32,7 @@ final class DailyChecklist {
         var completed = 0.0
         
         if hasRead { completed += 1 }
-        if workoutsCompleted >= 2 { completed += 1 }
+        completed += min(Double(workoutsCompleted) * 0.5, 1.0)
         if waterOunces >= 128.0 { completed += 1 } // 1 gallon = 128oz
         if hasSleep { completed += 1 }
         if hasAllSupplementsTaken { completed += 1 }
@@ -49,6 +50,10 @@ final class DailyChecklist {
         // For now, return true if any supplements are taken
         // This will be properly calculated in the ViewModel with ModelContext
         return !supplementsTaken.isEmpty
+    }
+    
+    var isPhotoLocked: Bool {
+        return hasPhoto && (photoPath != nil || photoThumbnailData != nil)
     }
 }
 
@@ -81,6 +86,19 @@ final class Supplement {
         self.dosage = dosage
         self.timeOfDay = timeOfDay
     }
+    
+    var shouldShowForCurrentTime: Bool {
+        let now = Calendar.current.component(.hour, from: Date())
+        
+        switch timeOfDay {
+        case .morning:
+            return now >= 6 && now < 12
+        case .evening:
+            return now >= 18 || now < 6
+        case .both:
+            return true
+        }
+    }
 }
 
 enum SupplementTime: String, CaseIterable, Codable {
@@ -103,6 +121,10 @@ final class ChallengeSettings {
     var duration: Int = 75 // Default 75 days
     var goalWaterOunces: Double = 128.0 // 1 gallon default
     var createdDate: Date = Date()
+    var userAffirmation: String = ""
+    var hasFutureStart: Bool {
+        return startDate > Date()
+    }
     
     init(startDate: Date, duration: Int = 75) {
         self.startDate = startDate
@@ -126,6 +148,19 @@ final class ChallengeSettings {
     var progressPercentage: Double {
         let currentDay = currentDay()
         return Double(currentDay) / Double(duration)
+    }
+    
+    var daysUntilStart: Int {
+        guard hasFutureStart else { return 0 }
+        return Calendar.current.dateComponents([.day], from: Date(), to: startDate).day ?? 0
+    }
+    
+    var waterGoalInCups: Double {
+        return goalWaterOunces / 8.0 // 8oz per cup
+    }
+    
+    var waterGoalInGallons: Double {
+        return goalWaterOunces / 128.0 // 128oz per gallon
     }
 }
 
@@ -174,5 +209,38 @@ enum NotificationType: String, CaseIterable, Codable {
         case .photoReminder: return "Photo Reminder"
         case .bedtimeReminder: return "Bedtime Reminder"
         }
+    }
+}
+
+@Model
+final class CustomHabit {
+    var id: UUID = UUID()
+    var name: String
+    var icon: String
+    var color: String // Store as hex string
+    var isActive: Bool = true
+    var requiresCount: Bool = false // If true, shows number input instead of checkbox
+    var targetCount: Int = 1
+    var createdDate: Date = Date()
+    
+    init(name: String, icon: String = "checkmark.circle", color: String = "#007AFF", requiresCount: Bool = false, targetCount: Int = 1) {
+        self.name = name
+        self.icon = icon
+        self.color = color
+        self.requiresCount = requiresCount
+        self.targetCount = targetCount
+    }
+}
+
+@Model
+final class CustomHabitEntry {
+    var date: Date
+    var habitId: UUID
+    var isCompleted: Bool = false
+    var count: Int = 0
+    
+    init(date: Date, habitId: UUID) {
+        self.date = date
+        self.habitId = habitId
     }
 }

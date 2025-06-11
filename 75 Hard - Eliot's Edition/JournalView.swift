@@ -12,6 +12,7 @@ struct JournalView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = JournalViewModel()
+    @State private var useGuidedPrompts = true
     
     var body: some View {
         NavigationStack {
@@ -29,69 +30,109 @@ struct JournalView: View {
                     }
                     .padding(.top)
                     
-                    // Morning Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "sunrise.fill")
-                                .foregroundColor(.orange)
-                            Text("Morning Reflection")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                        }
-                        
-                        Text(viewModel.morningPrompt)
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                        
-                        TextEditor(text: $viewModel.morningText)
-                            .frame(minHeight: 120)
-                            .padding(8)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color(.systemGray4), lineWidth: 1)
-                            )
+                    Picker("Journal Mode", selection: $useGuidedPrompts) {
+                        Text("Guided Prompts").tag(true)
+                        Text("Free Write").tag(false)
                     }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 2, x: 0, y: 1)
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.horizontal)
                     
-                    // Evening Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "moon.fill")
-                                .foregroundColor(.purple)
-                            Text("Evening Reflection")
-                                .font(.title2)
-                                .fontWeight(.semibold)
+                    if useGuidedPrompts {
+                        // Morning Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "sunrise.fill")
+                                    .foregroundColor(.orange)
+                                Text("Morning Reflection")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                            }
+                            
+                            Text(viewModel.morningPrompt)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                            
+                            TextEditor(text: $viewModel.morningText)
+                                .frame(minHeight: 120)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                )
                         }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(radius: 2, x: 0, y: 1)
                         
-                        Text(viewModel.eveningPrompt)
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                        
-                        TextEditor(text: $viewModel.eveningText)
-                            .frame(minHeight: 120)
-                            .padding(8)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color(.systemGray4), lineWidth: 1)
-                            )
+                        // Evening Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "moon.fill")
+                                    .foregroundColor(.purple)
+                                Text("Evening Reflection")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                            }
+                            
+                            Text(viewModel.eveningPrompt)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                            
+                            TextEditor(text: $viewModel.eveningText)
+                                .frame(minHeight: 120)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                )
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(radius: 2, x: 0, y: 1)
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "pencil.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Free Writing")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                            }
+                            
+                            Text("Write freely about your day, thoughts, feelings, or anything that comes to mind.")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                            
+                            TextEditor(text: $viewModel.freeWriteText)
+                                .frame(minHeight: 200)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                )
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(radius: 2, x: 0, y: 1)
                     }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 2, x: 0, y: 1)
                 }
                 .padding()
             }
@@ -125,6 +166,7 @@ class JournalViewModel: ObservableObject {
     @Published var eveningText = ""
     @Published var morningPrompt = ""
     @Published var eveningPrompt = ""
+    @Published var freeWriteText = ""
     
     private var modelContext: ModelContext?
     private var currentEntry: JournalEntry?
@@ -155,6 +197,7 @@ class JournalViewModel: ObservableObject {
                 currentEntry = entry
                 morningText = entry.morningText
                 eveningText = entry.eveningText
+                freeWriteText = entry.freeWriteText
             } else {
                 // Create new entry for today
                 let newEntry = JournalEntry(
@@ -177,6 +220,7 @@ class JournalViewModel: ObservableObject {
         
         currentEntry.morningText = morningText
         currentEntry.eveningText = eveningText
+        currentEntry.freeWriteText = freeWriteText
         
         do {
             try modelContext.save()

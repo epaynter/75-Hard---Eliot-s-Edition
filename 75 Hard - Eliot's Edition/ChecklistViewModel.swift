@@ -28,6 +28,10 @@ class ChecklistViewModel: ObservableObject {
     // Supplements
     @Published var todaySupplements: [Supplement] = []
     
+    // NEW: Custom habits support
+    @Published var customHabits: [CustomHabit] = []
+    @Published var customHabitEntries: [UUID: CustomHabitEntry] = [:]
+    
     private var modelContext: ModelContext?
     private var currentChecklist: DailyChecklist?
     
@@ -36,7 +40,8 @@ class ChecklistViewModel: ObservableObject {
         var completed = 0.0
         
         if hasRead { completed += 1 }
-        if workoutsCompleted >= 2 { completed += 1 }
+        // NEW: Each workout contributes 50% instead of requiring 2 full workouts
+        completed += min(Double(workoutsCompleted) * 0.5, 1.0)
         if waterOunces >= (challengeSettings?.goalWaterOunces ?? 128.0) { completed += 1 }
         if hasSleep { completed += 1 }
         if hasAllSupplementsTaken { completed += 1 }
@@ -63,10 +68,27 @@ class ChecklistViewModel: ObservableObject {
         return "\(Int(waterOunces))/\(Int(goal)) oz"
     }
     
+    // NEW: Water goal with conversions
+    var waterGoalWithConversions: String {
+        let goal = challengeSettings?.goalWaterOunces ?? 128.0
+        let cups = goal / 8.0
+        let gallons = goal / 128.0
+        return "\(Int(goal))oz = \(String(format: "%.1f", gallons)) gal = \(Int(cups)) cups"
+    }
+    
+    // NEW: Check if photo checkbox should be locked
+    var isPhotoLocked: Bool {
+        return currentChecklist?.isPhotoLocked ?? false
+    }
+    
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
         loadChallengeSettings()
-        SupplementManager.shared.createDefaultSupplements(context: context)
+        loadCustomHabits()
+        // Only create default supplements if none exist
+        if todaySupplements.isEmpty {
+            // Don't create default supplements - user needs to add them manually
+        }
     }
     
     func loadChallengeSettings() {
@@ -93,6 +115,43 @@ class ChecklistViewModel: ObservableObject {
         }
     }
     
+    // NEW: Load custom habits
+    func loadCustomHabits() {
+        guard let modelContext = modelContext else { return }
+        
+        let descriptor = FetchDescriptor<CustomHabit>(
+            predicate: #Predicate { $0.isActive },
+            sortBy: [SortDescriptor(\.name)]
+        )
+        
+        do {
+            customHabits = try modelContext.fetch(descriptor)
+            loadCustomHabitEntries()
+        } catch {
+            print("❌ Error loading custom habits: \(error)")
+        }
+    }
+    
+    // NEW: Load custom habit entries for selected date
+    func loadCustomHabitEntries() {
+        guard let modelContext = modelContext else { return }
+        
+        let dayStart = Calendar.current.startOfDay(for: selectedDate)
+        let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
+        
+        let predicate = #Predicate<CustomHabitEntry> { entry in
+            entry.date >= dayStart && entry.date < dayEnd
+        }
+        let descriptor = FetchDescriptor<CustomHabitEntry>(predicate: predicate)
+        
+        do {
+            let entries = try modelContext.fetch(descriptor)
+            customHabitEntries = Dictionary(uniqueKeysWithValues: entries.map { ($0.habitId, $0) })
+        } catch {
+            print("❌ Error loading custom habit entries: \(error)")
+        }
+    }
+    
     func updateCurrentDay() {
         guard let settings = challengeSettings else { return }
         currentDay = settings.currentDay(for: selectedDate)
@@ -103,6 +162,7 @@ class ChecklistViewModel: ObservableObject {
         updateCurrentDay()
         loadChecklistData()
         loadTodaySupplements()
+        loadCustomHabitEntries()
     }
     
     func loadTodaysData() {
@@ -147,10 +207,29 @@ class ChecklistViewModel: ObservableObject {
     
     private func loadTodaySupplements() {
         guard let modelContext = modelContext else { return }
-        todaySupplements = SupplementManager.shared.getSupplementsForTime(
-            date: selectedDate,
-            context: modelContext
+        
+        let descriptor = FetchDescriptor<Supplement>(
+            predicate: #Predicate { $0.isActive },
+            sortBy: [SortDescriptor(\.name)]
         )
+        
+        do {
+            let allSupplements = try modelContext.fetch(descriptor)
+            // Filter supplements based on time of day
+            todaySupplements = allSupplements.filter { supplement in
+                let hour = Calendar.current.component(.hour, from: selectedDate)
+                switch supplement.timeOfDay {
+                case .morning:
+                    return true // Always show morning supplements
+                case .evening:
+                    return true // Always show evening supplements  
+                case .both:
+                    return true // Always show both
+                }
+            }
+        } catch {
+            print("❌ Error loading supplements: \(error)")
+        }
     }
     
     private func updatePublishedValues(from checklist: DailyChecklist) {
@@ -209,9 +288,13 @@ class ChecklistViewModel: ObservableObject {
         saveChanges()
     }
     
+    // NEW: Photo toggle with locking logic
     func togglePhoto() {
-        hasPhoto.toggle()
-        saveChanges()
+        // Only allow toggle if photo is not locked
+        if !isPhotoLocked {
+            hasPhoto.toggle()
+            saveChanges()
+        }
     }
     
     func toggleJournaled() {
@@ -280,7 +363,13 @@ class ChecklistViewModel: ObservableObject {
         saveChanges()
     }
     
-    // MARK: - Day Navigation
+    // NEW: Store photo thumbnail data
+    func updatePhotoThumbnail(_ data: Data?) {
+        currentChecklist?.photoThumbnailData = data
+        saveChanges()
+    }
+    
+    // MARK: - Day Navigation (FIXED - Remove 2-day limitation)
     func canNavigateToPreviousDay() -> Bool {
         guard let settings = challengeSettings else { return false }
         return selectedDate > settings.startDate
@@ -288,6 +377,7 @@ class ChecklistViewModel: ObservableObject {
     
     func canNavigateToNextDay() -> Bool {
         guard let settings = challengeSettings else { return false }
+        // NEW: Allow navigation through entire challenge window, not just 2 days
         return selectedDate < min(Date(), settings.endDate)
     }
     
@@ -307,6 +397,16 @@ class ChecklistViewModel: ObservableObject {
         loadDataForDate(Date())
     }
     
+    // NEW: Jump to specific day
+    func navigateToDay(_ day: Int) {
+        guard let settings = challengeSettings,
+              day >= 1 && day <= settings.duration else { return }
+        
+        if let targetDate = Calendar.current.date(byAdding: .day, value: day - 1, to: settings.startDate) {
+            loadDataForDate(targetDate)
+        }
+    }
+    
     // MARK: - Challenge Progress
     var overallProgress: Double {
         guard let settings = challengeSettings else { return 0.0 }
@@ -320,5 +420,58 @@ class ChecklistViewModel: ObservableObject {
     
     var totalDays: Int {
         return challengeSettings?.duration ?? 75
+    }
+    
+    // NEW: Custom habit functions
+    func toggleCustomHabit(_ habit: CustomHabit) {
+        guard let modelContext = modelContext else { return }
+        
+        let dayStart = Calendar.current.startOfDay(for: selectedDate)
+        
+        if let entry = customHabitEntries[habit.id] {
+            entry.isCompleted.toggle()
+        } else {
+            let newEntry = CustomHabitEntry(date: dayStart, habitId: habit.id)
+            newEntry.isCompleted = true
+            modelContext.insert(newEntry)
+            customHabitEntries[habit.id] = newEntry
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("❌ Error saving custom habit entry: \(error)")
+        }
+    }
+    
+    func updateCustomHabitCount(_ habit: CustomHabit, count: Int) {
+        guard let modelContext = modelContext else { return }
+        
+        let dayStart = Calendar.current.startOfDay(for: selectedDate)
+        
+        if let entry = customHabitEntries[habit.id] {
+            entry.count = count
+            entry.isCompleted = count >= habit.targetCount
+        } else {
+            let newEntry = CustomHabitEntry(date: dayStart, habitId: habit.id)
+            newEntry.count = count
+            newEntry.isCompleted = count >= habit.targetCount
+            modelContext.insert(newEntry)
+            customHabitEntries[habit.id] = newEntry
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("❌ Error saving custom habit count: \(error)")
+        }
+    }
+    
+    func isCustomHabitCompleted(_ habit: CustomHabit) -> Bool {
+        return customHabitEntries[habit.id]?.isCompleted ?? false
+    }
+    
+    func getCustomHabitCount(_ habit: CustomHabit) -> Int {
+        return customHabitEntries[habit.id]?.count ?? 0
     }
 }

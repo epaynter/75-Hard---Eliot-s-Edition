@@ -79,28 +79,48 @@ struct CalendarView: View {
                     
                     // Streak Info
                     HStack(spacing: 20) {
-                        VStack {
+                        VStack(spacing: 4) {
                             Text("\(viewModel.currentStreak)")
-                                .font(.title)
-                                .fontWeight(.bold)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(.blue)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             Text("Current Streak")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
                         }
+                        .frame(maxWidth: .infinity)
                         
-                        VStack {
+                        VStack(spacing: 4) {
                             Text("\(viewModel.longestStreak)")
-                                .font(.title)
-                                .fontWeight(.bold)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(.green)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             Text("Longest Streak")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
                         }
+                        .frame(maxWidth: .infinity)
+                        
+                        // NEW: Add photo count
+                        VStack(spacing: 4) {
+                            Text("\(viewModel.photosTaken)")
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(.purple)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            Text("Photos Taken")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(20)
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
                 }
@@ -139,9 +159,17 @@ struct CalendarDayView: View {
                     .font(.caption)
                     .fontWeight(isToday ? .bold : .regular)
                 
-                Image(systemName: dayData.status.iconName)
-                    .font(.caption2)
-                    .foregroundColor(dayData.status.color)
+                HStack(spacing: 2) {
+                    Image(systemName: dayData.status.iconName)
+                        .font(.caption2)
+                        .foregroundColor(dayData.status.color)
+                    
+                    if dayData.hasPhoto {
+                        Image(systemName: "camera.fill")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                    }
+                }
             }
             .frame(width: 40, height: 40)
             .background(isToday ? Color.blue.opacity(0.2) : Color.clear)
@@ -299,6 +327,7 @@ class CalendarViewModel: ObservableObject {
     @Published var currentStreak = 0
     @Published var longestStreak = 0
     @Published var overallProgress: Double = 0
+    @Published var photosTaken = 0
     
     private var modelContext: ModelContext?
     
@@ -319,6 +348,8 @@ class CalendarViewModel: ObservableObject {
             guard let date = calendar.date(byAdding: .day, value: i, to: startDate) else { continue }
             
             let status: DayStatus
+            var hasPhoto = false
+            
             if date > today {
                 status = .upcoming
             } else {
@@ -334,6 +365,8 @@ class CalendarViewModel: ObservableObject {
                     let checklists = try modelContext.fetch(descriptor)
                     if let checklist = checklists.first {
                         status = checklist.completionPercentage >= 0.8 ? .completed : .missed
+                        // NEW: Check if photo was taken for this day
+                        hasPhoto = checklist.hasPhoto
                     } else {
                         status = .missed
                     }
@@ -342,7 +375,7 @@ class CalendarViewModel: ObservableObject {
                 }
             }
             
-            days.append(CalendarDayData(date: date, status: status))
+            days.append(CalendarDayData(date: date, status: status, hasPhoto: hasPhoto))
         }
         
         calendarDays = days
@@ -379,12 +412,22 @@ class CalendarViewModel: ObservableObject {
         
         currentStreak = current
         longestStreak = longest
+        
+        // Calculate photos taken
+        photosTaken = calendarDays.filter { $0.status == .completed && $0.hasPhoto }.count
     }
 }
 
 struct CalendarDayData {
     let date: Date
     let status: DayStatus
+    let hasPhoto: Bool
+    
+    init(date: Date, status: DayStatus, hasPhoto: Bool = false) {
+        self.date = date
+        self.status = status
+        self.hasPhoto = hasPhoto
+    }
 }
 
 enum DayStatus {

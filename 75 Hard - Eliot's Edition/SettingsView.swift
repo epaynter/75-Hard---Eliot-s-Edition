@@ -214,14 +214,26 @@ struct SettingsView: View {
                 modelContext.delete(setting)
             }
             
+            // NEW: Delete custom habits and their entries
+            let customHabitDescriptor = FetchDescriptor<CustomHabit>()
+            let customHabits = try modelContext.fetch(customHabitDescriptor)
+            for habit in customHabits {
+                modelContext.delete(habit)
+            }
+            
+            let customHabitEntryDescriptor = FetchDescriptor<CustomHabitEntry>()
+            let customHabitEntries = try modelContext.fetch(customHabitEntryDescriptor)
+            for entry in customHabitEntries {
+                modelContext.delete(entry)
+            }
+            
             try modelContext.save()
             
             // Reset local state
             supplements = []
             challengeSettings = nil
             
-            // Create default settings
-            SupplementManager.shared.createDefaultSupplements(context: modelContext)
+            // NEW: Don't create default supplements anymore - user starts fresh
             loadSettings()
             
         } catch {
@@ -242,6 +254,13 @@ struct SettingsView: View {
             let journals = try modelContext.fetch(journalDescriptor)
             for journal in journals {
                 modelContext.delete(journal)
+            }
+            
+            // NEW: Also reset custom habit entries (but keep the habit definitions)
+            let customHabitEntryDescriptor = FetchDescriptor<CustomHabitEntry>()
+            let customHabitEntries = try modelContext.fetch(customHabitEntryDescriptor)
+            for entry in customHabitEntries {
+                modelContext.delete(entry)
             }
             
             try modelContext.save()
@@ -629,58 +648,100 @@ struct AddSupplementView: View {
 
 struct ChallengeConfigView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var startDate: Date
-    @State private var duration: Double
-    @State private var waterGoal: Double
+    let challengeSettings: ChallengeSettings?
     let onSave: (ChallengeSettings) -> Void
     
+    @State private var startDate: Date
+    @State private var duration: Int
+    @State private var goalWaterOunces: Double
+    @State private var userAffirmation: String
+    
     init(challengeSettings: ChallengeSettings?, onSave: @escaping (ChallengeSettings) -> Void) {
+        self.challengeSettings = challengeSettings
         self.onSave = onSave
-        self._startDate = State(initialValue: challengeSettings?.startDate ?? Date())
-        self._duration = State(initialValue: Double(challengeSettings?.duration ?? 75))
-        self._waterGoal = State(initialValue: challengeSettings?.goalWaterOunces ?? 128.0)
+        
+        _startDate = State(initialValue: challengeSettings?.startDate ?? Date())
+        _duration = State(initialValue: challengeSettings?.duration ?? 75)
+        _goalWaterOunces = State(initialValue: challengeSettings?.goalWaterOunces ?? 128.0)
+        _userAffirmation = State(initialValue: challengeSettings?.userAffirmation ?? "")
     }
     
     var body: some View {
         NavigationStack {
             Form {
-                Section("Challenge Configuration") {
+                Section("Challenge Basics") {
                     DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
                     
-                    VStack {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Duration")
                             Spacer()
-                            Text("\(Int(duration)) days")
+                            Text("\(duration) days")
                                 .foregroundColor(.secondary)
                         }
-                        Slider(value: $duration, in: 30...100, step: 1)
-                    }
-                    
-                    VStack {
-                        HStack {
-                            Text("Daily Water Goal")
-                            Spacer()
-                            Text("\(Int(waterGoal)) oz")
-                                .foregroundColor(.secondary)
-                        }
-                        Slider(value: $waterGoal, in: 64...200, step: 8)
+                        
+                        // NEW: Proper 1-day increment slider
+                        Slider(value: Binding(
+                            get: { Double(duration) },
+                            set: { duration = Int($0) }
+                        ), in: 30...100, step: 1)
+                        .accentColor(.blue)
+                        
+                        Text("Choose between 30-100 days")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
                 
-                Section("Challenge Preview") {
-                    HStack {
-                        Text("End Date")
-                        Spacer()
-                        Text(Calendar.current.date(byAdding: .day, value: Int(duration) - 1, to: startDate) ?? startDate, style: .date)
+                Section("Water Goal") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Daily Water Goal")
+                            Spacer()
+                            Text("\(Int(goalWaterOunces)) oz")
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Slider(value: $goalWaterOunces, in: 64...200, step: 8)
+                            .accentColor(.cyan)
+                        
+                        // NEW: Show conversions
+                        Text("\(Int(goalWaterOunces))oz = \(String(format: "%.1f", goalWaterOunces/128.0)) gal = \(Int(goalWaterOunces/8)) cups")
+                            .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
-                    HStack {
-                        Text("Total Water Goal")
-                        Spacer()
-                        Text("\(Int(waterGoal * duration)) oz")
+                }
+                
+                Section("Personal Motivation") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Why are you doing this challenge?")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        TextField("I'm doing this because...", text: $userAffirmation, axis: .vertical)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .lineLimit(3...5)
+                        
+                        Text("This will be used for motivation throughout your journey")
+                            .font(.caption)
                             .foregroundColor(.secondary)
+                    }
+                }
+                
+                // NEW: Preview section for future start dates
+                if startDate > Date() {
+                    Section("Challenge Preview") {
+                        let daysUntilStart = Calendar.current.dateComponents([.day], from: Date(), to: startDate).day ?? 0
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Your challenge starts in \(daysUntilStart) days")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                            
+                            Text("End Date: \(Calendar.current.date(byAdding: .day, value: duration-1, to: startDate) ?? startDate, style: .date)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
             }
@@ -695,11 +756,16 @@ struct ChallengeConfigView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        let settings = ChallengeSettings(startDate: startDate, duration: Int(duration))
-                        settings.goalWaterOunces = waterGoal
+                        let settings = challengeSettings ?? ChallengeSettings(startDate: startDate, duration: duration)
+                        settings.startDate = startDate
+                        settings.duration = duration
+                        settings.goalWaterOunces = goalWaterOunces
+                        settings.userAffirmation = userAffirmation
+                        
                         onSave(settings)
                         dismiss()
                     }
+                    .fontWeight(.semibold)
                 }
             }
         }
