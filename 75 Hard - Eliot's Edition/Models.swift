@@ -64,6 +64,7 @@ final class JournalEntry {
     var eveningText: String = ""
     var morningPrompt: String = ""
     var eveningPrompt: String = ""
+    var freeWriteText: String = ""
     
     init(date: Date, morningPrompt: String = "", eveningPrompt: String = "") {
         self.date = date
