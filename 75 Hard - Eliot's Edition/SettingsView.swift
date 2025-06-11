@@ -362,7 +362,7 @@ struct NotificationCard: View {
             Toggle("Daily Reminders", isOn: $notificationManager.notificationsEnabled)
                 .font(.body)
                 .fontWeight(.medium)
-                .onChange(of: notificationManager.notificationsEnabled) { enabled in
+                .onChange(of: notificationManager.notificationsEnabled) { _, enabled in
                     Task {
                         if enabled {
                             await notificationManager.enableNotifications()

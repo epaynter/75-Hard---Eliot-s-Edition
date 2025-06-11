@@ -217,7 +217,6 @@ class ChecklistViewModel: ObservableObject {
             let allSupplements = try modelContext.fetch(descriptor)
             // Filter supplements based on time of day
             todaySupplements = allSupplements.filter { supplement in
-                let hour = Calendar.current.component(.hour, from: selectedDate)
                 switch supplement.timeOfDay {
                 case .morning:
                     return true // Always show morning supplements
