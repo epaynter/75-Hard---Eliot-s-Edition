@@ -12,7 +12,11 @@ struct JournalView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = JournalViewModel()
-    @State private var useGuidedPrompts = true
+    @State private var challengeSettings: ChallengeSettings?
+    
+    var currentJournalMode: JournalMode {
+        challengeSettings?.journalMode ?? .guidedPrompts
+    }
     
     var body: some View {
         NavigationStack {
@@ -27,17 +31,20 @@ struct JournalView: View {
                         Text(Date(), style: .date)
                             .font(.headline)
                             .foregroundColor(.secondary)
+                        
+                        Text(currentJournalMode.displayName)
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.blue.opacity(0.1))
+                            )
                     }
                     .padding(.top)
                     
-                    Picker("Journal Mode", selection: $useGuidedPrompts) {
-                        Text("Guided Prompts").tag(true)
-                        Text("Free Write").tag(false)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .padding(.horizontal)
-                    
-                    if useGuidedPrompts {
+                    if currentJournalMode == .guidedPrompts {
                         // Morning Section
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
@@ -155,7 +162,18 @@ struct JournalView: View {
             .onAppear {
                 viewModel.setModelContext(modelContext)
                 viewModel.loadTodaysEntry()
+                loadChallengeSettings()
             }
+        }
+    }
+    
+    private func loadChallengeSettings() {
+        let descriptor = FetchDescriptor<ChallengeSettings>()
+        do {
+            let settings = try modelContext.fetch(descriptor)
+            challengeSettings = settings.first
+        } catch {
+            print("Error loading challenge settings in JournalView: \(error)")
         }
     }
 }

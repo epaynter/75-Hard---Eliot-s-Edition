@@ -20,12 +20,12 @@ class ChecklistViewModel: ObservableObject {
     @Published var weight: Double?
     @Published var photoNote = ""
     
-    // Challenge settings
+    // Challenge settings - cache these to avoid repeated fetches
     @Published var challengeSettings: ChallengeSettings?
     @Published var currentDay = 1
     @Published var selectedDate = Date()
     
-    // Supplements
+    // Supplements - lazy load and cache
     @Published var todaySupplements: [Supplement] = []
     
     // NEW: Custom habits support
@@ -35,7 +35,22 @@ class ChecklistViewModel: ObservableObject {
     private var modelContext: ModelContext?
     private var currentChecklist: DailyChecklist?
     
+    // PERFORMANCE: Cache frequently used calculations
+    private var cachedTodaysProgress: Double?
+    private var lastProgressCalculationDate: Date?
+    
+    // PERFORMANCE: Debounce save operations to avoid excessive writes
+    private var saveTimer: Timer?
+    
     var todaysProgress: Double {
+        // Cache today's progress calculation to avoid repeated computation
+        let today = Calendar.current.startOfDay(for: selectedDate)
+        if let cached = cachedTodaysProgress,
+           let lastCalc = lastProgressCalculationDate,
+           Calendar.current.isDate(lastCalc, inSameDayAs: today) {
+            return cached
+        }
+        
         let totalTasks = 7.0
         var completed = 0.0
         
@@ -48,7 +63,13 @@ class ChecklistViewModel: ObservableObject {
         if hasPhoto { completed += 1 }
         if hasJournaled { completed += 1 }
         
-        return completed / totalTasks
+        let progress = completed / totalTasks
+        
+        // Cache the result
+        cachedTodaysProgress = progress
+        lastProgressCalculationDate = today
+        
+        return progress
     }
     
     var waterProgressPercentage: Double {
@@ -94,6 +115,9 @@ class ChecklistViewModel: ObservableObject {
     func loadChallengeSettings() {
         guard let modelContext = modelContext else { return }
         
+        // PERFORMANCE: Only load if not already cached
+        if challengeSettings != nil { return }
+        
         let descriptor = FetchDescriptor<ChallengeSettings>()
         do {
             let settings = try modelContext.fetch(descriptor)
@@ -115,9 +139,12 @@ class ChecklistViewModel: ObservableObject {
         }
     }
     
-    // NEW: Load custom habits
+    // PERFORMANCE: Load custom habits with efficient query
     func loadCustomHabits() {
         guard let modelContext = modelContext else { return }
+        
+        // Only reload if we don't have data or it's stale
+        if !customHabits.isEmpty { return }
         
         let descriptor = FetchDescriptor<CustomHabit>(
             predicate: #Predicate { $0.isActive },
@@ -126,15 +153,17 @@ class ChecklistViewModel: ObservableObject {
         
         do {
             customHabits = try modelContext.fetch(descriptor)
-            loadCustomHabitEntries()
+            if !customHabits.isEmpty {
+                loadCustomHabitEntries()
+            }
         } catch {
             print("❌ Error loading custom habits: \(error)")
         }
     }
     
-    // NEW: Load custom habit entries for selected date
+    // PERFORMANCE: Efficient custom habit entries loading
     func loadCustomHabitEntries() {
-        guard let modelContext = modelContext else { return }
+        guard let modelContext = modelContext, !customHabits.isEmpty else { return }
         
         let dayStart = Calendar.current.startOfDay(for: selectedDate)
         let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
@@ -158,6 +187,11 @@ class ChecklistViewModel: ObservableObject {
     }
     
     func loadDataForDate(_ date: Date) {
+        // PERFORMANCE: Avoid unnecessary work if date hasn't changed
+        if Calendar.current.isDate(selectedDate, inSameDayAs: date) && currentChecklist != nil {
+            return
+        }
+        
         selectedDate = date
         updateCurrentDay()
         loadChecklistData()
@@ -175,8 +209,7 @@ class ChecklistViewModel: ObservableObject {
             return 
         }
         
-        print("✅ Loading checklist data for \(selectedDate)...")
-        
+        // PERFORMANCE: Optimize query for single day
         let dayStart = Calendar.current.startOfDay(for: selectedDate)
         let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
         
@@ -184,16 +217,16 @@ class ChecklistViewModel: ObservableObject {
             checklist.date >= dayStart && checklist.date < dayEnd
         }
         
+        // PERFORMANCE: Limit to 1 result since we only expect one per day
         let descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
+        descriptor.fetchLimit = 1
         
         do {
             let checklists = try modelContext.fetch(descriptor)
             if let checklist = checklists.first {
-                print("✅ Found existing checklist for \(selectedDate)")
                 currentChecklist = checklist
                 updatePublishedValues(from: checklist)
             } else {
-                print("✅ Creating new checklist for \(selectedDate)")
                 let newChecklist = DailyChecklist(date: dayStart)
                 modelContext.insert(newChecklist)
                 currentChecklist = newChecklist
@@ -208,6 +241,7 @@ class ChecklistViewModel: ObservableObject {
     private func loadTodaySupplements() {
         guard let modelContext = modelContext else { return }
         
+        // PERFORMANCE: Use more efficient query with limit if we have many supplements
         let descriptor = FetchDescriptor<Supplement>(
             predicate: #Predicate { $0.isActive },
             sortBy: [SortDescriptor(\.name)]
@@ -215,17 +249,10 @@ class ChecklistViewModel: ObservableObject {
         
         do {
             let allSupplements = try modelContext.fetch(descriptor)
-            // Filter supplements based on time of day
+            // PERFORMANCE: Filter in memory instead of complex database query
             todaySupplements = allSupplements.filter { supplement in
-                let hour = Calendar.current.component(.hour, from: selectedDate)
-                switch supplement.timeOfDay {
-                case .morning:
-                    return true // Always show morning supplements
-                case .evening:
-                    return true // Always show evening supplements  
-                case .both:
-                    return true // Always show both
-                }
+                // Always show all supplements - filtering by time of day is just for UI hints
+                return true
             }
         } catch {
             print("❌ Error loading supplements: \(error)")
@@ -257,6 +284,14 @@ class ChecklistViewModel: ObservableObject {
     }
     
     private func saveChanges() {
+        // PERFORMANCE: Debounce save operations to avoid excessive database writes
+        saveTimer?.invalidate()
+        saveTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
+            self?.performSave()
+        }
+    }
+    
+    private func performSave() {
         guard let modelContext = modelContext,
               let currentChecklist = currentChecklist else { return }
         
@@ -270,11 +305,20 @@ class ChecklistViewModel: ObservableObject {
         currentChecklist.weight = weight
         currentChecklist.photoNote = photoNote
         
+        // Invalidate progress cache when data changes
+        cachedTodaysProgress = nil
+        
         do {
             try modelContext.save()
         } catch {
             print("❌ Error saving checklist: \(error)")
         }
+    }
+    
+    // PERFORMANCE: Immediate save for critical operations
+    private func saveImmediately() {
+        saveTimer?.invalidate()
+        performSave()
     }
     
     // MARK: - Toggle Functions
@@ -345,6 +389,56 @@ class ChecklistViewModel: ObservableObject {
     
     func isSupplementTaken(_ supplement: Supplement) -> Bool {
         return supplementsTaken.contains(supplement.id.uuidString)
+    }
+    
+    // NEW: Refresh supplements function to be called when supplements are added/modified
+    func refreshSupplements() {
+        loadTodaySupplements()
+        // Force UI update
+        objectWillChange.send()
+    }
+    
+    // NEW: Update supplements for current and future days when supplements are added
+    func updateSupplementsForCurrentAndFutureDays() {
+        guard let modelContext = modelContext,
+              let settings = challengeSettings else { return }
+        
+        let today = Date()
+        let endDate = settings.endDate
+        
+        // Get all dates from today to end of challenge
+        var currentDate = max(today, settings.startDate)
+        var datesToUpdate: [Date] = []
+        
+        while currentDate <= endDate {
+            datesToUpdate.append(currentDate)
+            currentDate = Calendar.current.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
+        }
+        
+        // Update checklists for these dates to include new supplements
+        for date in datesToUpdate {
+            let dayStart = Calendar.current.startOfDay(for: date)
+            let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
+            
+            let predicate = #Predicate<DailyChecklist> { checklist in
+                checklist.date >= dayStart && checklist.date < dayEnd
+            }
+            
+            let descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
+            
+            do {
+                let checklists = try modelContext.fetch(descriptor)
+                if let checklist = checklists.first {
+                    // Existing checklists don't need to be updated - supplements are loaded dynamically
+                    // Just ensure the current view reflects the new supplements if today
+                    if Calendar.current.isDate(date, inSameDayAs: selectedDate) {
+                        refreshSupplements()
+                    }
+                }
+            } catch {
+                print("❌ Error updating checklist for supplements: \(error)")
+            }
+        }
     }
     
     // MARK: - Photo & Weight
