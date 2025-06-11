@@ -6,5 +6,13 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take progress photos for your 75 Hard challenge.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to save and manage your progress photos.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>This app reads sleep data from HealthKit to automatically track your sleep goals.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>This app may update sleep data in HealthKit when you manually override sleep duration.</string>
 </dict>
 </plist>

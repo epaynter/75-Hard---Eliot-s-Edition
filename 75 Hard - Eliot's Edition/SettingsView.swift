@@ -13,6 +13,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var notificationManager = NotificationManager.shared
+    @StateObject private var checklistViewModel = ChecklistViewModel()
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     @State private var showingResetAlert = false
     @State private var showingAddSupplement = false
     @State private var showingChallengeConfig = false
@@ -92,6 +94,8 @@ struct SettingsView: View {
             }
             .onAppear {
                 loadSettings()
+                // Set up checklist view model for supplement updates
+                checklistViewModel.setModelContext(modelContext)
             }
             .sheet(isPresented: $showingAddSupplement) {
                 AddSupplementView(
@@ -158,6 +162,9 @@ struct SettingsView: View {
         do {
             try modelContext.save()
             supplements.append(supplement)
+            
+            // FIXED: Update supplements for current and future days
+            checklistViewModel.updateSupplementsForCurrentAndFutureDays()
             
             // Reset form
             newSupplementName = ""
@@ -233,8 +240,11 @@ struct SettingsView: View {
             supplements = []
             challengeSettings = nil
             
-            // NEW: Don't create default supplements anymore - user starts fresh
-            loadSettings()
+            // FIXED: Reset onboarding flag to return to onboarding screen
+            hasCompletedOnboarding = false
+            
+            // Dismiss settings view to trigger app state change
+            dismiss()
             
         } catch {
             print("Error resetting all progress: \(error)")
@@ -655,6 +665,7 @@ struct ChallengeConfigView: View {
     @State private var duration: Int
     @State private var goalWaterOunces: Double
     @State private var userAffirmation: String
+    @State private var journalMode: JournalMode
     
     init(challengeSettings: ChallengeSettings?, onSave: @escaping (ChallengeSettings) -> Void) {
         self.challengeSettings = challengeSettings
@@ -664,6 +675,7 @@ struct ChallengeConfigView: View {
         _duration = State(initialValue: challengeSettings?.duration ?? 75)
         _goalWaterOunces = State(initialValue: challengeSettings?.goalWaterOunces ?? 128.0)
         _userAffirmation = State(initialValue: challengeSettings?.userAffirmation ?? "")
+        _journalMode = State(initialValue: challengeSettings?.journalMode ?? .guidedPrompts)
     }
     
     var body: some View {
@@ -728,6 +740,33 @@ struct ChallengeConfigView: View {
                     }
                 }
                 
+                // NEW: Journal Mode Selection
+                Section("Journaling Style") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Choose your journaling approach")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        Picker("Journal Mode", selection: $journalMode) {
+                            ForEach(JournalMode.allCases, id: \.self) { mode in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(mode.displayName)
+                                        .font(.body)
+                                    Text(mode.description)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                .tag(mode)
+                            }
+                        }
+                        .pickerStyle(RadioGroupPickerStyle())
+                        
+                        Text("This setting can be changed later in Settings")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
                 // NEW: Preview section for future start dates
                 if startDate > Date() {
                     Section("Challenge Preview") {
@@ -761,6 +800,7 @@ struct ChallengeConfigView: View {
                         settings.duration = duration
                         settings.goalWaterOunces = goalWaterOunces
                         settings.userAffirmation = userAffirmation
+                        settings.journalMode = journalMode
                         
                         onSave(settings)
                         dismiss()

@@ -25,8 +25,8 @@ struct HomeView: View {
     var heroGradient: LinearGradient {
         LinearGradient(
             colors: colorScheme == .dark 
-                ? [Color(red: 0.1, green: 0.1, blue: 0.2), Color(red: 0.2, green: 0.1, blue: 0.3)]
-                : [Color(red: 0.95, green: 0.95, blue: 1.0), Color(red: 0.9, green: 0.9, blue: 0.95)],
+                ? [Color(red: 0.08, green: 0.08, blue: 0.09), Color(red: 0.12, green: 0.12, blue: 0.13)]
+                : [Color(red: 0.98, green: 0.98, blue: 0.99), Color(red: 0.95, green: 0.95, blue: 0.96)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -34,7 +34,7 @@ struct HomeView: View {
     
     var progressGradient: LinearGradient {
         LinearGradient(
-            colors: [Color.blue, Color.purple],
+            colors: colorScheme == .dark ? [Color.white, Color.gray] : [Color.black, Color.gray],
             startPoint: .leading,
             endPoint: .trailing
         )
@@ -262,25 +262,29 @@ struct HomeView: View {
         }
     }
     
-    // NEW: Generate rotating motivational messages
+    // UPDATED: More stoic and disciplined motivational messages
     private func getMotivationalMessage() -> String {
         let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
         
         let messages = [
-            "🔥 NO EXCUSES 🔥",
-            "💪 STAY HARD 💪", 
-            "⚡ DISCIPLINE = FREEDOM ⚡",
-            "🎯 LOCK IN 🎯",
-            "💎 MENTAL TOUGHNESS 💎",
-            "⚔️ WARRIOR MINDSET ⚔️",
-            "🚀 LEVEL UP 🚀",
-            "⛰️ CLIMB HIGHER ⛰️",
-            "🔥 EARN YOUR KEEP 🔥",
-            "💯 ALL IN 💯",
-            "⚡ NO WEAK LINKS ⚡",
-            "🎯 STAY FOCUSED 🎯",
-            "💪 PROVE YOURSELF 💪",
-            "🔥 DOMINATE TODAY 🔥"
+            "NO EXCUSES",
+            "STAY HARD", 
+            "DISCIPLINE = FREEDOM",
+            "LOCK IN",
+            "MENTAL TOUGHNESS",
+            "WARRIOR MINDSET",
+            "LEVEL UP",
+            "CLIMB HIGHER",
+            "EARN YOUR KEEP",
+            "ALL IN",
+            "NO WEAK LINKS",
+            "STAY FOCUSED",
+            "PROVE YOURSELF",
+            "DOMINATE TODAY",
+            "EMBRACE THE GRIND",
+            "CHOOSE HARD",
+            "RELENTLESS",
+            "UNBREAKABLE"
         ]
         
         return messages[dayOfYear % messages.count]
@@ -865,56 +869,51 @@ struct ModernQuickActionButton: View {
 
 struct MotivationalCard: View {
     private let quotes = [
-        // NEW: Real quotes from motivational leaders
-        "Stay hard! - David Goggins",
+        // UPDATED: More stoic quotes from disciplined leaders
+        "Stay hard. - David Goggins",
         "Discipline equals freedom. - Jocko Willink", 
-        "The path to success is to take massive, determined actions. - Tony Robbins",
-        "You are in danger of living a life so comfortable and soft that you will die without ever realizing your true potential. - David Goggins",
+        "The path to success is massive, determined action. - Tony Robbins",
+        "You are in danger of living a life so comfortable that you will die without realizing your true potential. - David Goggins",
         "Good. - Jocko Willink",
         "Extreme ownership. - Jocko Willink",
         "Progress equals happiness. - Tony Robbins",
         "The only person you are destined to become is the person you decide to be. - Ralph Waldo Emerson",
-        "Don't limit your challenges, challenge your limits. - Unknown",
-        "If you want to be uncommon amongst uncommon people, you have to be willing to do what they won't do. - David Goggins"
+        "Don't limit your challenges, challenge your limits.",
+        "If you want to be uncommon amongst uncommon people, you have to do what they won't do. - David Goggins",
+        "The cave you fear to enter holds the treasure you seek. - Joseph Campbell",
+        "What we do now echoes in eternity. - Marcus Aurelius",
+        "You control your effort. You control your attitude. You control your response.",
+        "The impediment to action advances action. What stands in the way becomes the way. - Marcus Aurelius"
     ]
     
     var body: some View {
-        VStack(spacing: 12) {
-            Text("💪 DAILY MOTIVATION")
-                .font(.headline)
-                .fontWeight(.black)
-                .tracking(1)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.orange, .red],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+        VStack(spacing: 16) {
+            // UPDATED: More structured header
+            Text("DAILY MINDSET")
+                .font(.system(.subheadline, design: .monospaced, weight: .bold))
+                .tracking(2)
+                .foregroundColor(.secondary)
+            
+            Rectangle()
+                .fill(Color.primary)
+                .frame(height: 1)
+                .frame(maxWidth: 40)
             
             Text(quotes.randomElement() ?? quotes[0])
-                .font(.body)
-                .fontWeight(.medium)
+                .font(.system(.body, design: .serif, weight: .medium))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.primary)
-                .padding(.horizontal, 8)
+                .lineSpacing(4)
+                .padding(.horizontal, 4)
         }
-        .padding(20)
+        .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
+            Rectangle()
+                .fill(Color(.systemBackground))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.orange.opacity(0.3), .red.opacity(0.3)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                    Rectangle()
+                        .stroke(Color(.separator), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
         )
     }
 }
@@ -1067,28 +1066,39 @@ struct CameraFirstPhotoView: View {
     }
 }
 
-// NEW: Simple camera view wrapper
+// FIXED: Improved camera view with proper error handling
 struct CameraView: UIViewControllerRepresentable {
     let onImageCaptured: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.delegate = context.coordinator
+        picker.cameraCaptureMode = .photo
+        picker.cameraDevice = .rear
+        picker.showsCameraControls = true
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {
+        // Update camera settings if needed
+        if uiViewController.sourceType == .camera {
+            uiViewController.cameraCaptureMode = .photo
+        }
+    }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(onImageCaptured: onImageCaptured)
+        Coordinator(onImageCaptured: onImageCaptured, dismiss: dismiss)
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         let onImageCaptured: (UIImage) -> Void
+        let dismiss: DismissAction
         
-        init(onImageCaptured: @escaping (UIImage) -> Void) {
+        init(onImageCaptured: @escaping (UIImage) -> Void, dismiss: DismissAction) {
             self.onImageCaptured = onImageCaptured
+            self.dismiss = dismiss
         }
         
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
@@ -1104,15 +1114,17 @@ struct CameraView: UIViewControllerRepresentable {
     }
 }
 
-// NEW: Preview challenge overview card
+// FIXED: Preview challenge overview card with centered layout
 struct PreviewChallengeCard: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Challenge Overview")
+        VStack(alignment: .center, spacing: 20) {
+            Text("What this challenge includes")
                 .font(.title2)
                 .fontWeight(.bold)
+                .multilineTextAlignment(.center)
             
-            VStack(spacing: 16) {
+            // FIXED: Centered grid layout instead of left-aligned VStack
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
                 PreviewHabitRow(icon: "book.fill", title: "Read 10 pages daily", color: .green)
                 PreviewHabitRow(icon: "figure.run", title: "2 workouts per day", color: .red)
                 PreviewHabitRow(icon: "drop.fill", title: "1 gallon of water", color: .cyan)
@@ -1126,6 +1138,7 @@ struct PreviewChallengeCard: View {
                 Text("💪 Get Ready to Transform")
                     .font(.headline)
                     .fontWeight(.black)
+                    .multilineTextAlignment(.center)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.orange, .red],
@@ -1155,7 +1168,7 @@ struct PreviewHabitRow: View {
     let color: Color
     
     var body: some View {
-        HStack(spacing: 16) {
+        VStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(color.opacity(0.2))
@@ -1167,17 +1180,14 @@ struct PreviewHabitRow: View {
             }
             
             Text(title)
-                .font(.body)
+                .font(.caption)
                 .fontWeight(.medium)
                 .foregroundColor(.primary)
-            
-            Spacer()
-            
-            Image(systemName: "checkmark.circle")
-                .font(.title3)
-                .foregroundColor(color.opacity(0.5))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
         }
-        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
     }
 }
 

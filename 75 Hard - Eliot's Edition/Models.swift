@@ -115,6 +115,25 @@ enum SupplementTime: String, CaseIterable, Codable {
     }
 }
 
+enum JournalMode: String, CaseIterable, Codable {
+    case guidedPrompts = "guided"
+    case freeWrite = "free"
+    
+    var displayName: String {
+        switch self {
+        case .guidedPrompts: return "Guided Prompts"
+        case .freeWrite: return "Free Write"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .guidedPrompts: return "Daily prompts for morning and evening reflection"
+        case .freeWrite: return "Open-ended journaling with no prompts"
+        }
+    }
+}
+
 @Model
 final class ChallengeSettings {
     var startDate: Date
@@ -122,6 +141,7 @@ final class ChallengeSettings {
     var goalWaterOunces: Double = 128.0 // 1 gallon default
     var createdDate: Date = Date()
     var userAffirmation: String = ""
+    var journalMode: JournalMode = .guidedPrompts // NEW: Journal preference
     var hasFutureStart: Bool {
         return startDate > Date()
     }
@@ -242,5 +262,73 @@ final class CustomHabitEntry {
     init(date: Date, habitId: UUID) {
         self.date = date
         self.habitId = habitId
+    }
+}
+
+// NEW: Nutrition tracking models
+@Model
+final class NutritionGoals {
+    var id: UUID = UUID()
+    var dailyCalories: Int? // Optional calorie goal
+    var dailyProtein: Double? // Optional protein goal in grams
+    var dailyCarbs: Double? // Optional carb goal in grams  
+    var dailyFat: Double? // Optional fat goal in grams
+    var isActive: Bool = true
+    var createdDate: Date = Date()
+    
+    init(dailyCalories: Int? = nil, dailyProtein: Double? = nil, dailyCarbs: Double? = nil, dailyFat: Double? = nil) {
+        self.dailyCalories = dailyCalories
+        self.dailyProtein = dailyProtein
+        self.dailyCarbs = dailyCarbs
+        self.dailyFat = dailyFat
+    }
+    
+    var hasAnyGoals: Bool {
+        dailyCalories != nil || dailyProtein != nil || dailyCarbs != nil || dailyFat != nil
+    }
+}
+
+@Model
+final class NutritionEntry {
+    var id: UUID = UUID()
+    var date: Date
+    var foodItem: String = "" // e.g. "Chicken Breast" or just a number
+    var calories: Double = 0.0
+    var protein: Double = 0.0
+    var carbs: Double = 0.0
+    var fat: Double = 0.0
+    var isQuickEntry: Bool = false // True for simple numeric entries
+    var timestamp: Date = Date()
+    
+    init(date: Date, foodItem: String = "", calories: Double = 0.0, protein: Double = 0.0, carbs: Double = 0.0, fat: Double = 0.0, isQuickEntry: Bool = false) {
+        self.date = date
+        self.foodItem = foodItem
+        self.calories = calories
+        self.protein = protein
+        self.carbs = carbs
+        self.fat = fat
+        self.isQuickEntry = isQuickEntry
+    }
+}
+
+@Model
+final class DailyNutritionSummary {
+    var date: Date
+    var totalCalories: Double = 0.0
+    var totalProtein: Double = 0.0
+    var totalCarbs: Double = 0.0
+    var totalFat: Double = 0.0
+    var entryCount: Int = 0
+    
+    init(date: Date) {
+        self.date = date
+    }
+    
+    func updateFromEntries(_ entries: [NutritionEntry]) {
+        totalCalories = entries.reduce(0) { $0 + $1.calories }
+        totalProtein = entries.reduce(0) { $0 + $1.protein }
+        totalCarbs = entries.reduce(0) { $0 + $1.carbs }
+        totalFat = entries.reduce(0) { $0 + $1.fat }
+        entryCount = entries.count
     }
 }

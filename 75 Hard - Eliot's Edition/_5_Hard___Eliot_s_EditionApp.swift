@@ -23,10 +23,17 @@ struct LockInApp: App {
                         ChallengeSettings.self,
                         NotificationPreference.self,
                         CustomHabit.self,
-                        CustomHabitEntry.self
+                        CustomHabitEntry.self,
+                        NutritionGoals.self,
+                        NutritionEntry.self,
+                        DailyNutritionSummary.self
                     ])
                     .onAppear {
                         NotificationManager.shared.requestNotificationPermission()
+                        // Request HealthKit permission if available
+                        Task {
+                            await HealthKitManager.shared.requestHealthKitPermission()
+                        }
                     }
             } else {
                 OnboardingView()
@@ -37,7 +44,10 @@ struct LockInApp: App {
                         ChallengeSettings.self,
                         NotificationPreference.self,
                         CustomHabit.self,
-                        CustomHabitEntry.self
+                        CustomHabitEntry.self,
+                        NutritionGoals.self,
+                        NutritionEntry.self,
+                        DailyNutritionSummary.self
                     ])
             }
         }
@@ -109,7 +119,7 @@ struct OnboardingView: View {
                             LinearGradient(colors: [.pink, .purple], startPoint: .leading, endPoint: .trailing)
                         )
                     
-                    Text("I'm doing this because...")
+                    Text("Why are you doing this?")
                         .font(.title)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
@@ -125,18 +135,35 @@ struct OnboardingView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .lineLimit(3...5)
                         .padding(.horizontal)
+                        .onTapGesture {
+                            // Ensure text field is focused when tapped
+                        }
                     
-                    Text("Examples: \"To prove I can keep my word to myself\", \"To become mentally tougher\", \"To build unstoppable discipline\"")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                    // NEW: Optional prompt suggestions
+                    VStack(spacing: 8) {
+                        Text("Tap a suggestion or write your own:")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 8) {
+                            PromptSuggestionButton(text: "To rebuild discipline", userAffirmation: $userAffirmation)
+                            PromptSuggestionButton(text: "To feel strong and focused again", userAffirmation: $userAffirmation)
+                            PromptSuggestionButton(text: "To prove something to myself", userAffirmation: $userAffirmation)
+                            PromptSuggestionButton(text: "To become mentally tougher", userAffirmation: $userAffirmation)
+                            PromptSuggestionButton(text: "To keep my word to myself", userAffirmation: $userAffirmation)
+                        }
+                    }
+                    .padding(.horizontal)
                 }
                 
                 Spacer()
             }
             .padding(.horizontal, 32)
             .padding(.top, 60)
+            .onTapGesture {
+                // FIXED: Dismiss keyboard when tapping outside
+                hideKeyboard()
+            }
             .tag(2)
             
             // Final Setup Page
@@ -308,5 +335,40 @@ struct ChallengeQuickSetup: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
+    }
+}
+
+// NEW: Helper components for improved onboarding experience
+struct PromptSuggestionButton: View {
+    let text: String
+    @Binding var userAffirmation: String
+    
+    var body: some View {
+        Button(action: {
+            userAffirmation = text
+            hideKeyboard()
+        }) {
+            Text(text)
+                .font(.caption)
+                .foregroundColor(.blue)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.blue.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                        )
+                )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// FIXED: Keyboard dismissal extension
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
