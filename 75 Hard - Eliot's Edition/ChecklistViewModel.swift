@@ -218,7 +218,7 @@ class ChecklistViewModel: ObservableObject {
         }
         
         // PERFORMANCE: Limit to 1 result since we only expect one per day
-        let descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
+        var descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
         descriptor.fetchLimit = 1
         
         do {

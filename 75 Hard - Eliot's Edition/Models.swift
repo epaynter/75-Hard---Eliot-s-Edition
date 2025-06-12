@@ -79,12 +79,13 @@ final class Supplement {
     var dosage: String
     var timeOfDay: SupplementTime
     var isActive: Bool = true
-    var createdDate: Date = Date()
+    var createdDate: Date
     
     init(name: String, dosage: String, timeOfDay: SupplementTime) {
         self.name = name
         self.dosage = dosage
         self.timeOfDay = timeOfDay
+        self.createdDate = Date()
     }
     
     var shouldShowForCurrentTime: Bool {
@@ -139,7 +140,7 @@ final class ChallengeSettings {
     var startDate: Date
     var duration: Int = 75 // Default 75 days
     var goalWaterOunces: Double = 128.0 // 1 gallon default
-    var createdDate: Date = Date()
+    var createdDate: Date
     var userAffirmation: String = ""
     var journalMode: JournalMode = .guidedPrompts // NEW: Journal preference
     var hasFutureStart: Bool {
@@ -149,6 +150,7 @@ final class ChallengeSettings {
     init(startDate: Date, duration: Int = 75) {
         self.startDate = startDate
         self.duration = duration
+        self.createdDate = Date()
     }
     
     var endDate: Date {
@@ -241,7 +243,7 @@ final class CustomHabit {
     var isActive: Bool = true
     var requiresCount: Bool = false // If true, shows number input instead of checkbox
     var targetCount: Int = 1
-    var createdDate: Date = Date()
+    var createdDate: Date
     
     init(name: String, icon: String = "checkmark.circle", color: String = "#007AFF", requiresCount: Bool = false, targetCount: Int = 1) {
         self.name = name
@@ -249,6 +251,7 @@ final class CustomHabit {
         self.color = color
         self.requiresCount = requiresCount
         self.targetCount = targetCount
+        self.createdDate = Date()
     }
 }
 
@@ -274,13 +277,14 @@ final class NutritionGoals {
     var dailyCarbs: Double? // Optional carb goal in grams  
     var dailyFat: Double? // Optional fat goal in grams
     var isActive: Bool = true
-    var createdDate: Date = Date()
+    var createdDate: Date
     
     init(dailyCalories: Int? = nil, dailyProtein: Double? = nil, dailyCarbs: Double? = nil, dailyFat: Double? = nil) {
         self.dailyCalories = dailyCalories
         self.dailyProtein = dailyProtein
         self.dailyCarbs = dailyCarbs
         self.dailyFat = dailyFat
+        self.createdDate = Date()
     }
     
     var hasAnyGoals: Bool {
@@ -298,7 +302,7 @@ final class NutritionEntry {
     var carbs: Double = 0.0
     var fat: Double = 0.0
     var isQuickEntry: Bool = false // True for simple numeric entries
-    var timestamp: Date = Date()
+    var timestamp: Date
     
     init(date: Date, foodItem: String = "", calories: Double = 0.0, protein: Double = 0.0, carbs: Double = 0.0, fat: Double = 0.0, isQuickEntry: Bool = false) {
         self.date = date
@@ -308,6 +312,7 @@ final class NutritionEntry {
         self.carbs = carbs
         self.fat = fat
         self.isQuickEntry = isQuickEntry
+        self.timestamp = Date()
     }
 }
 
