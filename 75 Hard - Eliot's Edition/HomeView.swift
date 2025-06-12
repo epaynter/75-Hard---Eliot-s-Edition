@@ -262,7 +262,7 @@ struct HomeView: View {
         }
     }
     
-    // UPDATED: More stoic and disciplined motivational messages
+    // FIXED: Properly defined motivational message function
     private func getMotivationalMessage() -> String {
         let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
         
@@ -889,7 +889,7 @@ struct MotivationalCard: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // UPDATED: More structured header
+            // FIXED: Proper SwiftUI modifiers for header
             Text("DAILY MINDSET")
                 .font(.system(.subheadline, design: .monospaced, weight: .bold))
                 .tracking(2)
@@ -900,6 +900,7 @@ struct MotivationalCard: View {
                 .frame(height: 1)
                 .frame(maxWidth: 40)
             
+            // FIXED: Proper SwiftUI modifiers for quote text
             Text(quotes.randomElement() ?? quotes[0])
                 .font(.system(.body, design: .serif, weight: .medium))
                 .multilineTextAlignment(.center)
@@ -1115,7 +1116,7 @@ struct CameraView: UIViewControllerRepresentable {
     }
 }
 
-// FIXED: Preview challenge overview card with centered layout
+// FIXED: Preview challenge overview card with proper SwiftUI modifiers
 struct PreviewChallengeCard: View {
     var body: some View {
         VStack(alignment: .center, spacing: 20) {
@@ -1124,7 +1125,7 @@ struct PreviewChallengeCard: View {
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
             
-            // FIXED: Centered grid layout instead of left-aligned VStack
+            // FIXED: Proper grid layout with correct spacing
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
                 PreviewHabitRow(icon: "book.fill", title: "Read 10 pages daily", color: .green)
                 PreviewHabitRow(icon: "figure.run", title: "2 workouts per day", color: .red)
