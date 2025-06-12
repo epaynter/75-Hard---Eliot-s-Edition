@@ -58,162 +58,95 @@ struct LockInApp: App {
 struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @State private var currentPage = 0
     @State private var userAffirmation = ""
     @State private var challengeSettings: ChallengeSettings?
     
     var body: some View {
-        TabView(selection: $currentPage) {
-            // Welcome Page
-            OnboardingPageView(
-                title: "Welcome to 75 Hard",
-                subtitle: "Elite • Focused • Transformative",
-                icon: "flame.fill",
-                description: "Ready to become your best self? This isn't just another app – it's your transformation companion.",
-                gradient: LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
-            )
-            .tag(0)
-            
-            // Commitment Page
-            VStack(spacing: 32) {
-                VStack(spacing: 16) {
-                    Image(systemName: "target")
-                        .font(.system(size: 60))
-                        .foregroundStyle(
-                            LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
-                        )
-                    
-                    Text("Are you ready to become your best self?")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-                }
-                
+        ScrollView {
+            VStack(spacing: 16) {
                 VStack(spacing: 24) {
-                    Text("This challenge requires:")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                    // Headline
+                    Text("Start Your Challenge")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
                     
-                    VStack(spacing: 16) {
-                        CommitmentRow(icon: "book.fill", text: "Reading 10 pages daily", color: .green)
-                        CommitmentRow(icon: "figure.run", text: "2 workouts per day", color: .red)
-                        CommitmentRow(icon: "drop.fill", text: "1 gallon of water", color: .cyan)
-                        CommitmentRow(icon: "camera.fill", text: "Daily progress photo", color: .blue)
-                        CommitmentRow(icon: "moon.fill", text: "7+ hours of sleep", color: .purple)
-                        CommitmentRow(icon: "book.closed.fill", text: "Daily journaling", color: .orange)
-                    }
-                }
-                
-                Spacer()
-            }
-            .padding(.horizontal, 32)
-            .padding(.top, 60)
-            .tag(1)
-            
-            // Affirmation Page
-            VStack(spacing: 32) {
-                VStack(spacing: 16) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(
-                            LinearGradient(colors: [.pink, .purple], startPoint: .leading, endPoint: .trailing)
-                        )
-                    
+                    // Why question prompt
                     Text("Why are you doing this?")
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(.title2)
+                        .fontWeight(.semibold)
                         .multilineTextAlignment(.center)
-                    
-                    Text("Your personal why will fuel your discipline")
-                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                
-                VStack(spacing: 16) {
-                    TextField("Enter your reason...", text: $userAffirmation, axis: .vertical)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .lineLimit(3...5)
-                        .padding(.horizontal)
-                        .onTapGesture {
-                            // Ensure text field is focused when tapped
-                        }
                     
-                    // NEW: Optional prompt suggestions
+                    // Multiline text input
                     VStack(spacing: 8) {
-                        Text("Tap a suggestion or write your own:")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 8) {
-                            PromptSuggestionButton(text: "To rebuild discipline", userAffirmation: $userAffirmation)
-                            PromptSuggestionButton(text: "To feel strong and focused again", userAffirmation: $userAffirmation)
-                            PromptSuggestionButton(text: "To prove something to myself", userAffirmation: $userAffirmation)
-                            PromptSuggestionButton(text: "To become mentally tougher", userAffirmation: $userAffirmation)
-                            PromptSuggestionButton(text: "To keep my word to myself", userAffirmation: $userAffirmation)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                
-                Spacer()
-            }
-            .padding(.horizontal, 32)
-            .padding(.top, 60)
-            .onTapGesture {
-                // FIXED: Dismiss keyboard when tapping outside
-                hideKeyboard()
-            }
-            .tag(2)
-            
-            // Final Setup Page
-            VStack(spacing: 32) {
-                VStack(spacing: 16) {
-                    Image(systemName: "calendar.badge.plus")
-                        .font(.system(size: 60))
-                        .foregroundStyle(
-                            LinearGradient(colors: [.green, .blue], startPoint: .leading, endPoint: .trailing)
-                        )
-                    
-                    Text("Let's set up your challenge")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-                }
-                
-                ChallengeQuickSetup(challengeSettings: $challengeSettings)
-                
-                Button("Start My Transformation") {
-                    completeOnboarding()
-                }
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(
-                            LinearGradient(
-                                colors: [.blue, .purple],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                        TextEditor(text: $userAffirmation)
+                            .frame(height: 120)
+                            .padding(.horizontal, 24)
+                            .padding(.top, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color(.systemBackground))
+                                            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                    )
                             )
-                        )
-                        .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-                )
-                .disabled(userAffirmation.isEmpty)
-                .opacity(userAffirmation.isEmpty ? 0.6 : 1.0)
-                .padding(.horizontal)
-                
-                Spacer()
+                            .overlay(
+                                Group {
+                                    if userAffirmation.isEmpty {
+                                        Text("Write your personal motivation here...")
+                                            .foregroundColor(.secondary)
+                                            .multilineTextAlignment(.center)
+                                            .allowsHitTesting(false)
+                                            .padding(.top, 20)
+                                    }
+                                },
+                                alignment: .topLeading
+                            )
+                    }
+                    
+                    // Challenge setup section
+                    VStack(spacing: 16) {
+                        Text("Challenge Settings")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .multilineTextAlignment(.center)
+                        
+                        ChallengeQuickSetup(challengeSettings: $challengeSettings)
+                    }
+                    
+                    // Start button
+                    Button("Start My Transformation") {
+                        completeOnboarding()
+                    }
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.blue, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                    )
+                    .disabled(userAffirmation.isEmpty)
+                    .opacity(userAffirmation.isEmpty ? 0.6 : 1.0)
+                }
             }
-            .padding(.horizontal, 32)
-            .padding(.top, 60)
-            .tag(3)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, 24)
         }
-        .tabViewStyle(PageTabViewStyle())
-        .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+        .onTapGesture {
+            hideKeyboard()
+        }
         .onAppear {
             challengeSettings = ChallengeSettings(startDate: Date(), duration: 75)
         }
