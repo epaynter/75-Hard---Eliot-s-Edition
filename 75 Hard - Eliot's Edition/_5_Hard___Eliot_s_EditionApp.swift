@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import HealthKit
 
 @main
 struct LockInApp: App {

@@ -62,6 +62,7 @@ final class JournalEntry {
     var date: Date
     var morningText: String = ""
     var eveningText: String = ""
+    var freeWriteText: String = ""
     var morningPrompt: String = ""
     var eveningPrompt: String = ""
     
