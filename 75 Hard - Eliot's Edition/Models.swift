@@ -74,12 +74,12 @@ final class JournalEntry {
 
 @Model
 final class Supplement {
-    var id: UUID = UUID()
+    var id: UUID = Foundation.UUID()
     var name: String
     var dosage: String
     var timeOfDay: SupplementTime
     var isActive: Bool = true
-    var createdDate: Date = Date()
+    var createdDate: Date = Foundation.Date()
     
     init(name: String, dosage: String, timeOfDay: SupplementTime) {
         self.name = name
@@ -88,7 +88,7 @@ final class Supplement {
     }
     
     var shouldShowForCurrentTime: Bool {
-        let now = Calendar.current.component(.hour, from: Date())
+        let now = Calendar.current.component(.hour, from: Foundation.Date())
         
         switch timeOfDay {
         case .morning:
@@ -139,11 +139,11 @@ final class ChallengeSettings {
     var startDate: Date
     var duration: Int = 75 // Default 75 days
     var goalWaterOunces: Double = 128.0 // 1 gallon default
-    var createdDate: Date = Date()
+    var createdDate: Date = Foundation.Date()
     var userAffirmation: String = ""
-    var journalMode: JournalMode = .guidedPrompts // NEW: Journal preference
+    var journalMode: JournalMode = JournalMode.guidedPrompts // NEW: Journal preference
     var hasFutureStart: Bool {
-        return startDate > Date()
+        return startDate > Foundation.Date()
     }
     
     init(startDate: Date, duration: Int = 75) {
@@ -155,13 +155,13 @@ final class ChallengeSettings {
         Calendar.current.date(byAdding: .day, value: duration - 1, to: startDate) ?? startDate
     }
     
-    func currentDay(for date: Date = Date()) -> Int {
+    func currentDay(for date: Date = Foundation.Date()) -> Int {
         let days = Calendar.current.dateComponents([.day], from: startDate, to: date).day ?? 0
         return max(1, min(days + 1, duration))
     }
     
     var isActive: Bool {
-        let today = Date()
+        let today = Foundation.Date()
         return today >= startDate && today <= endDate
     }
     
@@ -172,7 +172,7 @@ final class ChallengeSettings {
     
     var daysUntilStart: Int {
         guard hasFutureStart else { return 0 }
-        return Calendar.current.dateComponents([.day], from: Date(), to: startDate).day ?? 0
+        return Calendar.current.dateComponents([.day], from: Foundation.Date(), to: startDate).day ?? 0
     }
     
     var waterGoalInCups: Double {
@@ -186,7 +186,7 @@ final class ChallengeSettings {
 
 @Model
 final class NotificationPreference {
-    var id: UUID = UUID()
+    var id: UUID = Foundation.UUID()
     var type: NotificationType
     var isEnabled: Bool = true
     var scheduledTime: Date // Time of day for notification
@@ -234,14 +234,14 @@ enum NotificationType: String, CaseIterable, Codable {
 
 @Model
 final class CustomHabit {
-    var id: UUID = UUID()
+    var id: UUID = Foundation.UUID()
     var name: String
     var icon: String
     var color: String // Store as hex string
     var isActive: Bool = true
     var requiresCount: Bool = false // If true, shows number input instead of checkbox
     var targetCount: Int = 1
-    var createdDate: Date = Date()
+    var createdDate: Date = Foundation.Date()
     
     init(name: String, icon: String = "checkmark.circle", color: String = "#007AFF", requiresCount: Bool = false, targetCount: Int = 1) {
         self.name = name
@@ -268,13 +268,13 @@ final class CustomHabitEntry {
 // NEW: Nutrition tracking models
 @Model
 final class NutritionGoals {
-    var id: UUID = UUID()
+    var id: UUID = Foundation.UUID()
     var dailyCalories: Int? // Optional calorie goal
     var dailyProtein: Double? // Optional protein goal in grams
     var dailyCarbs: Double? // Optional carb goal in grams  
     var dailyFat: Double? // Optional fat goal in grams
     var isActive: Bool = true
-    var createdDate: Date = Date()
+    var createdDate: Date = Foundation.Date()
     
     init(dailyCalories: Int? = nil, dailyProtein: Double? = nil, dailyCarbs: Double? = nil, dailyFat: Double? = nil) {
         self.dailyCalories = dailyCalories
@@ -290,7 +290,7 @@ final class NutritionGoals {
 
 @Model
 final class NutritionEntry {
-    var id: UUID = UUID()
+    var id: UUID = Foundation.UUID()
     var date: Date
     var foodItem: String = "" // e.g. "Chicken Breast" or just a number
     var calories: Double = 0.0
@@ -298,7 +298,7 @@ final class NutritionEntry {
     var carbs: Double = 0.0
     var fat: Double = 0.0
     var isQuickEntry: Bool = false // True for simple numeric entries
-    var timestamp: Date = Date()
+    var timestamp: Date = Foundation.Date()
     
     init(date: Date, foodItem: String = "", calories: Double = 0.0, protein: Double = 0.0, carbs: Double = 0.0, fat: Double = 0.0, isQuickEntry: Bool = false) {
         self.date = date
