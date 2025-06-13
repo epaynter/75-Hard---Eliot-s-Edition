@@ -372,9 +372,9 @@ struct NotificationCard: View {
             Toggle("Daily Reminders", isOn: $notificationManager.notificationsEnabled)
                 .font(.body)
                 .fontWeight(.medium)
-                .onChange(of: notificationManager.notificationsEnabled) { enabled in
+                .onChange(of: notificationManager.notificationsEnabled) { oldValue, newValue in
                     Task {
-                        if enabled {
+                        if newValue {
                             await notificationManager.enableNotifications()
                         } else {
                             await notificationManager.disableNotifications()
@@ -759,7 +759,7 @@ struct ChallengeConfigView: View {
                                 .tag(mode)
                             }
                         }
-                        .pickerStyle(RadioGroupPickerStyle())
+                        .pickerStyle(WheelPickerStyle())
                         
                         Text("This setting can be changed later in Settings")
                             .font(.caption)

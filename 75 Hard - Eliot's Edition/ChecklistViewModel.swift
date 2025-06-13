@@ -291,6 +291,14 @@ class ChecklistViewModel: ObservableObject {
         }
     }
     
+    // PERFORMANCE: Immediate save for critical operations
+    private func saveImmediately() {
+        saveTimer?.invalidate()
+        performSave()
+    }
+    
+    // FIXED: Add @MainActor annotation to fix main actor isolation error
+    @MainActor
     private func performSave() {
         guard let modelContext = modelContext,
               let currentChecklist = currentChecklist else { return }
@@ -313,12 +321,6 @@ class ChecklistViewModel: ObservableObject {
         } catch {
             print("❌ Error saving checklist: \(error)")
         }
-    }
-    
-    // PERFORMANCE: Immediate save for critical operations
-    private func saveImmediately() {
-        saveTimer?.invalidate()
-        performSave()
     }
     
     // MARK: - Toggle Functions
@@ -428,7 +430,8 @@ class ChecklistViewModel: ObservableObject {
             
             do {
                 let checklists = try modelContext.fetch(descriptor)
-                if let checklist = checklists.first {
+                // FIXED: Replace unused variable with boolean test
+                if !checklists.isEmpty {
                     // Existing checklists don't need to be updated - supplements are loaded dynamically
                     // Just ensure the current view reflects the new supplements if today
                     if Calendar.current.isDate(date, inSameDayAs: selectedDate) {

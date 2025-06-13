@@ -74,8 +74,8 @@ class HealthKitManager: ObservableObject {
                 var totalSleepMinutes: Double = 0
                 
                 for sample in sleepSamples {
-                    // Only count "asleep" states (not in bed but awake)
-                    if sample.value == HKCategoryValueSleepAnalysis.asleep.rawValue ||
+                    // FIXED: Use asleepUnspecified instead of deprecated asleep
+                    if sample.value == HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue ||
                        sample.value == HKCategoryValueSleepAnalysis.asleepCore.rawValue ||
                        sample.value == HKCategoryValueSleepAnalysis.asleepDeep.rawValue ||
                        sample.value == HKCategoryValueSleepAnalysis.asleepREM.rawValue {
@@ -107,7 +107,7 @@ class HealthKitManager: ObservableObject {
         
         let sleepSample = HKCategorySample(
             type: sleepType,
-            value: HKCategoryValueSleepAnalysis.asleep.rawValue,
+            value: HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue,
             start: startOfSleep,
             end: endOfSleep
         )

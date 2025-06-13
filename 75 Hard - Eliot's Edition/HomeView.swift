@@ -39,6 +39,12 @@ struct HomeView: View {
             endPoint: .trailing
         )
     }
+
+    // FIXED: Extract computed property to avoid complex type-checking
+    private var isInPreviewMode: Bool {
+        guard let settings = viewModel.challengeSettings else { return false }
+        return settings.hasFutureStart
+    }
     
     var body: some View {
         NavigationStack {
@@ -49,150 +55,11 @@ struct HomeView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // NEW: Check if challenge is in preview mode (future start date)
-                        if let settings = viewModel.challengeSettings, settings.hasFutureStart {
-                            // Preview Mode Layout
-                            VStack(spacing: 24) {
-                                // Preview Header
-                                VStack(spacing: 16) {
-                                    Image(systemName: "calendar.badge.clock")
-                                        .font(.system(size: 60))
-                                        .foregroundStyle(progressGradient)
-                                    
-                                    Text("Your challenge starts in")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.secondary)
-                                    
-                                    Text("\(settings.daysUntilStart)")
-                                        .font(.system(size: 72, weight: .black, design: .rounded))
-                                        .foregroundStyle(progressGradient)
-                                    
-                                    Text(settings.daysUntilStart == 1 ? "day" : "days")
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.secondary)
-                                    
-                                    VStack(spacing: 8) {
-                                        Text("Start Date: \(settings.startDate, style: .date)")
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                        
-                                        if !settings.userAffirmation.isEmpty {
-                                            Text("Your Why: \"\(settings.userAffirmation)\"")
-                                                .font(.body)
-                                                .italic()
-                                                .multilineTextAlignment(.center)
-                                                .foregroundColor(.primary)
-                                                .padding(.horizontal)
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal)
-                                .padding(.top, 8)
-                                
-                                // Preview Challenge Overview
-                                PreviewChallengeCard()
-                                
-                                // Motivational Quote Section
-                                MotivationalCard()
-                                
-                                // Preview Actions
-                                VStack(spacing: 16) {
-                                    Button("Update Challenge Settings") {
-                                        showingSettings = true
-                                    }
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.blue)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.blue, lineWidth: 2)
-                                    )
-                                    
-                                    Button("Start Challenge Today") {
-                                        startChallengeToday()
-                                    }
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(progressGradient)
-                                            .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-                                    )
-                                }
-                                .padding(.horizontal)
-                            }
+                        // FIXED: Use extracted computed property for better type checking
+                        if isInPreviewMode {
+                            PreviewModeView()
                         } else {
-                            // Regular Challenge Mode Layout (existing code)
-                            // Hero Header
-                            VStack(spacing: 16) {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("DAY \(viewModel.currentDay)")
-                                            .font(.system(size: 48, weight: .black, design: .rounded))
-                                            .foregroundStyle(
-                                                LinearGradient(
-                                                    colors: [.blue, .purple],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                )
-                                            )
-                                        
-                                        Text("of \(viewModel.totalDays)")
-                                            .font(.title2)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    // Day Navigation
-                                    DayNavigationControls(viewModel: viewModel) {
-                                        showingDayNavigation = true
-                                    }
-                                }
-                                
-                                // Challenge Title & Motivation
-                                VStack(spacing: 8) {
-                                    // NEW: Rotating motivational messages instead of static "Lock In"
-                                    Text(getMotivationalMessage())
-                                        .font(.title)
-                                        .fontWeight(.black)
-                                        .tracking(3)
-                                        .multilineTextAlignment(.center)
-                                        .lineLimit(2)
-                                    
-                                    if !Calendar.current.isDateInToday(viewModel.selectedDate) {
-                                        Text(viewModel.selectedDate, style: .date)
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                            
-                            // Progress Overview
-                            ProgressOverviewCard(viewModel: viewModel)
-                            
-                            // Daily Checklist
-                            ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry, showingPhotoDetail: $showingPhotoDetail)
-                            
-                            // Quick Actions
-                            QuickActionsCard(
-                                showingCamera: $showingCamera,
-                                showingJournal: $showingJournal,
-                                showingCalendar: $showingCalendar
-                            )
-                            
-                            // Motivational Quote Section
-                            MotivationalCard()
+                            RegularChallengeView()
                         }
                     }
                     .padding(.horizontal)
@@ -259,6 +126,162 @@ struct HomeView: View {
             } message: {
                 Text("Navigate to view or edit another day's progress.")
             }
+        }
+    }
+    
+    // FIXED: Extract preview mode into separate view for better type checking
+    @ViewBuilder
+    private func PreviewModeView() -> some View {
+        guard let settings = viewModel.challengeSettings else {
+            EmptyView()
+            return
+        }
+        
+        VStack(spacing: 24) {
+            // Preview Header
+            VStack(spacing: 16) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 60))
+                    .foregroundStyle(progressGradient)
+                
+                Text("Your challenge starts in")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+                
+                Text("\(settings.daysUntilStart)")
+                    .font(.system(size: 72, weight: .black, design: .rounded))
+                    .foregroundStyle(progressGradient)
+                
+                Text(settings.daysUntilStart == 1 ? "day" : "days")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.secondary)
+                
+                VStack(spacing: 8) {
+                    Text("Start Date: \(settings.startDate, style: .date)")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    if !settings.userAffirmation.isEmpty {
+                        Text("Your Why: \"\(settings.userAffirmation)\"")
+                            .font(.body)
+                            .italic()
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.primary)
+                            .padding(.horizontal)
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
+            // Preview Challenge Overview
+            PreviewChallengeCard()
+            
+            // Motivational Quote Section
+            MotivationalCard()
+            
+            // Preview Actions
+            VStack(spacing: 16) {
+                Button("Update Challenge Settings") {
+                    showingSettings = true
+                }
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.blue)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.blue, lineWidth: 2)
+                )
+                
+                Button("Start Challenge Today") {
+                    startChallengeToday()
+                }
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(progressGradient)
+                        .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                )
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    // FIXED: Extract regular challenge mode into separate view for better type checking
+    @ViewBuilder
+    private func RegularChallengeView() -> some View {
+        VStack(spacing: 24) {
+            // Hero Header
+            VStack(spacing: 16) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("DAY \(viewModel.currentDay)")
+                            .font(.system(size: 48, weight: .black, design: .rounded))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.blue, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                        
+                        Text("of \(viewModel.totalDays)")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    // Day Navigation
+                    DayNavigationControls(viewModel: viewModel) {
+                        showingDayNavigation = true
+                    }
+                }
+                
+                // Challenge Title & Motivation
+                VStack(spacing: 8) {
+                    // NEW: Rotating motivational messages instead of static "Lock In"
+                    Text(getMotivationalMessage())
+                        .font(.title)
+                        .fontWeight(.black)
+                        .tracking(3)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                    
+                    if !Calendar.current.isDateInToday(viewModel.selectedDate) {
+                        Text(viewModel.selectedDate, style: .date)
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
+            // Progress Overview
+            ProgressOverviewCard(viewModel: viewModel)
+            
+            // Daily Checklist
+            ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry, showingPhotoDetail: $showingPhotoDetail)
+            
+            // Quick Actions
+            QuickActionsCard(
+                showingCamera: $showingCamera,
+                showingJournal: $showingJournal,
+                showingCalendar: $showingCalendar
+            )
+            
+            // Motivational Quote Section
+            MotivationalCard()
         }
     }
     
@@ -1037,10 +1060,10 @@ struct CameraFirstPhotoView: View {
                 }
             }
             .photosPicker(isPresented: $showingGallery, selection: $selectedPhoto, matching: .images)
-            .onChange(of: selectedPhoto) { newPhoto in
-                if let newPhoto = newPhoto {
+            .onChange(of: selectedPhoto) { oldValue, newValue in
+                if let newValue = newValue {
                     isLoading = true
-                    processSelectedPhoto(newPhoto)
+                    processSelectedPhoto(newValue)
                 }
             }
         }
