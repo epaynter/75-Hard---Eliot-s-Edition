@@ -218,7 +218,7 @@ class ChecklistViewModel: ObservableObject {
         }
         
         // PERFORMANCE: Limit to 1 result since we only expect one per day
-        let descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
+        var descriptor = FetchDescriptor<DailyChecklist>(predicate: predicate)
         descriptor.fetchLimit = 1
         
         do {
@@ -287,7 +287,9 @@ class ChecklistViewModel: ObservableObject {
         // PERFORMANCE: Debounce save operations to avoid excessive database writes
         saveTimer?.invalidate()
         saveTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
-            self?.performSave()
+            Task { @MainActor in
+                self?.performSave()
+            }
         }
     }
     
@@ -428,7 +430,7 @@ class ChecklistViewModel: ObservableObject {
             
             do {
                 let checklists = try modelContext.fetch(descriptor)
-                if let checklist = checklists.first {
+                if !checklists.isEmpty {
                     // Existing checklists don't need to be updated - supplements are loaded dynamically
                     // Just ensure the current view reflects the new supplements if today
                     if Calendar.current.isDate(date, inSameDayAs: selectedDate) {

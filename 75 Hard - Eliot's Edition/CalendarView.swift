@@ -217,9 +217,9 @@ struct DayDetailView: View {
                             
                             HabitStatusRow(title: "Read 10 pages", completed: checklist.hasRead)
                             HabitStatusRow(title: "Workouts (\(checklist.workoutsCompleted)/2)", completed: checklist.workoutsCompleted >= 2)
-                            HabitStatusRow(title: "Water", completed: checklist.hasWater)
+                            HabitStatusRow(title: "Water", completed: checklist.waterOunces >= 128)
                             HabitStatusRow(title: "7+ hours sleep", completed: checklist.hasSleep)
-                            HabitStatusRow(title: "Supplements", completed: checklist.hasSupplements)
+                            HabitStatusRow(title: "Supplements", completed: checklist.hasAllSupplementsTaken)
                             HabitStatusRow(title: "Photo taken", completed: checklist.hasPhoto)
                             HabitStatusRow(title: "Journaled", completed: checklist.hasJournaled)
                         }

@@ -1037,7 +1037,7 @@ struct CameraFirstPhotoView: View {
                 }
             }
             .photosPicker(isPresented: $showingGallery, selection: $selectedPhoto, matching: .images)
-            .onChange(of: selectedPhoto) { newPhoto in
+            .onChange(of: selectedPhoto) { oldValue, newPhoto in
                 if let newPhoto = newPhoto {
                     isLoading = true
                     processSelectedPhoto(newPhoto)

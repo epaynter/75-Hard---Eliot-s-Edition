@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import HealthKit
 
 @main
 struct LockInApp: App {
@@ -15,7 +16,7 @@ struct LockInApp: App {
     var body: some Scene {
         WindowGroup {
             if hasCompletedOnboarding {
-                HomeView()
+                MainTabView()
                     .modelContainer(for: [
                         DailyChecklist.self,
                         JournalEntry.self,

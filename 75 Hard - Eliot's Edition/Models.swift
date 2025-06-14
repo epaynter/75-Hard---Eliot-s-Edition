@@ -64,6 +64,7 @@ final class JournalEntry {
     var eveningText: String = ""
     var morningPrompt: String = ""
     var eveningPrompt: String = ""
+    var freeWriteText: String = ""
     
     init(date: Date, morningPrompt: String = "", eveningPrompt: String = "") {
         self.date = date
@@ -141,7 +142,7 @@ final class ChallengeSettings {
     var goalWaterOunces: Double = 128.0 // 1 gallon default
     var createdDate: Date = Date()
     var userAffirmation: String = ""
-    var journalMode: JournalMode = .guidedPrompts // NEW: Journal preference
+    var journalMode: JournalMode = JournalMode.guidedPrompts // NEW: Journal preference
     var hasFutureStart: Bool {
         return startDate > Date()
     }

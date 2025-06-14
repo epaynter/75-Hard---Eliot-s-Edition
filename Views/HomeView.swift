@@ -8,7 +8,7 @@ struct HomeView: View {
     @State private var showingJournal = false
     
     init() {
-        _viewModel = State(initialValue: ChecklistViewModel(modelContext: ModelContext.shared))
+        _viewModel = State(initialValue: ChecklistViewModel())
     }
     
     var body: some View {
@@ -96,6 +96,7 @@ struct HomeView: View {
                 JournalView()
             }
             .onAppear {
+                viewModel.setModelContext(modelContext)
                 viewModel.loadOrCreateTodayChecklist()
             }
         }
