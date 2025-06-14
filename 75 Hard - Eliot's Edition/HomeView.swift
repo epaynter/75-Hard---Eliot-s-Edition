@@ -196,7 +196,7 @@ struct HomeView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 100) // Increased padding for custom tab bar
                 }
             }
             .toolbar {
