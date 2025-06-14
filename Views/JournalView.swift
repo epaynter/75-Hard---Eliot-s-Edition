@@ -23,7 +23,8 @@ struct JournalView: View {
                 // Morning Section
                 VStack(alignment: .leading) {
                     Text("Morning Reflection")
-                        .font(.headline)
+                        .font(.titleMedium)
+                        .fontWeight(.medium)
                     
                     TextEditor(text: $morningEntry)
                         .frame(height: 150)
@@ -35,7 +36,8 @@ struct JournalView: View {
                 // Evening Section
                 VStack(alignment: .leading) {
                     Text("Evening Reflection")
-                        .font(.headline)
+                        .font(.titleMedium)
+                        .fontWeight(.medium)
                     
                     TextEditor(text: $eveningEntry)
                         .frame(height: 150)
@@ -47,10 +49,11 @@ struct JournalView: View {
                 // Weekly Prompt Section
                 VStack(alignment: .leading) {
                     Text("Weekly Prompt")
-                        .font(.headline)
+                        .font(.titleMedium)
+                        .fontWeight(.medium)
                     
                     Text(PromptManager.shared.getPromptForWeek())
-                        .font(.subheadline)
+                        .font(.bodyText)
                         .foregroundColor(.secondary)
                         .padding(.bottom, 4)
                     

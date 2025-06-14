@@ -65,7 +65,7 @@ struct HomeView: View {
                                         .foregroundColor(.secondary)
                                     
                                     Text("\(settings.daysUntilStart)")
-                                        .font(.system(size: 72, weight: .black, design: .rounded))
+                                        .font(.system(size: 60, weight: .semibold, design: .monospaced))
                                         .foregroundStyle(progressGradient)
                                     
                                     Text(settings.daysUntilStart == 1 ? "day" : "days")
@@ -135,7 +135,7 @@ struct HomeView: View {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("DAY \(viewModel.currentDay)")
-                                            .font(.system(size: 48, weight: .black, design: .rounded))
+                                            .font(.system(size: 40, weight: .semibold, design: .monospaced))
                                             .foregroundStyle(
                                                 LinearGradient(
                                                     colors: [.blue, .purple],
@@ -199,17 +199,6 @@ struct HomeView: View {
                     .padding(.bottom, 100) // Increased padding for custom tab bar
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gear")
-                            .font(.title2)
-                            .foregroundColor(.primary)
-                    }
-                }
-            }
             .onAppear {
                 viewModel.setModelContext(modelContext)
                 viewModel.loadTodaysData()
@@ -219,9 +208,6 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingCalendar) {
                 CalendarView()
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
             }
             .sheet(isPresented: $showingCamera) {
                 CameraFirstPhotoView(viewModel: viewModel) {

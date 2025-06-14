@@ -81,7 +81,7 @@ struct CalendarView: View {
                     HStack(spacing: 20) {
                         VStack(spacing: 4) {
                             Text("\(viewModel.currentStreak)")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 24, weight: .semibold, design: .default))
                                 .foregroundColor(.blue)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
@@ -94,7 +94,7 @@ struct CalendarView: View {
                         
                         VStack(spacing: 4) {
                             Text("\(viewModel.longestStreak)")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 24, weight: .semibold, design: .default))
                                 .foregroundColor(.green)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
@@ -108,7 +108,7 @@ struct CalendarView: View {
                         // NEW: Add photo count
                         VStack(spacing: 4) {
                             Text("\(viewModel.photosTaken)")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 24, weight: .semibold, design: .default))
                                 .foregroundColor(.purple)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)

@@ -660,131 +660,171 @@ struct ChallengeConfigView: View {
     @Environment(\.dismiss) private var dismiss
     let challengeSettings: ChallengeSettings?
     let onSave: (ChallengeSettings) -> Void
-    
+
     @State private var startDate: Date
     @State private var duration: Int
     @State private var goalWaterOunces: Double
     @State private var userAffirmation: String
     @State private var journalMode: JournalMode
-    
+
     init(challengeSettings: ChallengeSettings?, onSave: @escaping (ChallengeSettings) -> Void) {
         self.challengeSettings = challengeSettings
         self.onSave = onSave
-        
         _startDate = State(initialValue: challengeSettings?.startDate ?? Date())
         _duration = State(initialValue: challengeSettings?.duration ?? 75)
         _goalWaterOunces = State(initialValue: challengeSettings?.goalWaterOunces ?? 128.0)
         _userAffirmation = State(initialValue: challengeSettings?.userAffirmation ?? "")
         _journalMode = State(initialValue: challengeSettings?.journalMode ?? .guidedPrompts)
     }
-    
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Challenge Basics") {
-                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Challenge Basics Card
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack {
-                            Text("Duration")
-                            Spacer()
-                            Text("\(duration) days")
+                            Image(systemName: "target")
+                                .foregroundColor(.blue)
+                                .font(.title2)
+                            Text("Challenge Basics")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                        }
+                        DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
+                            .datePickerStyle(.compact)
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Duration")
+                                Spacer()
+                                Text("\(duration) days")
+                                    .foregroundColor(.secondary)
+                            }
+                            Slider(value: Binding(
+                                get: { Double(duration) },
+                                set: { duration = Int($0) }
+                            ), in: 30...100, step: 1)
+                            .accentColor(.blue)
+                            Text("Choose between 30-100 days")
+                                .font(.caption)
                                 .foregroundColor(.secondary)
                         }
-                        
-                        // NEW: Proper 1-day increment slider
-                        Slider(value: Binding(
-                            get: { Double(duration) },
-                            set: { duration = Int($0) }
-                        ), in: 30...100, step: 1)
-                        .accentColor(.blue)
-                        
-                        Text("Choose between 30-100 days")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Section("Water Goal") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Daily Water Goal")
-                            Spacer()
-                            Text("\(Int(goalWaterOunces)) oz")
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Water Goal")
+                                Spacer()
+                                Text("\(Int(goalWaterOunces)) oz")
+                                    .foregroundColor(.secondary)
+                            }
+                            Slider(value: $goalWaterOunces, in: 64...200, step: 1)
+                                .accentColor(.cyan)
+                            Text("Recommended: 128 oz (1 gallon)")
+                                .font(.caption)
                                 .foregroundColor(.secondary)
                         }
-                        
-                        Slider(value: $goalWaterOunces, in: 64...200, step: 8)
-                            .accentColor(.cyan)
-                        
-                        // NEW: Show conversions
-                        Text("\(Int(goalWaterOunces))oz = \(String(format: "%.1f", goalWaterOunces/128.0)) gal = \(Int(goalWaterOunces/8)) cups")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                     }
-                }
-                
-                Section("Personal Motivation") {
-                    VStack(alignment: .leading, spacing: 8) {
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.ultraThinMaterial)
+                            .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
+                    )
+                    // Motivation Card
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(.red)
+                                .font(.title2)
+                            Text("Your Why")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                        }
                         Text("Why are you doing this challenge?")
                             .font(.subheadline)
-                            .fontWeight(.medium)
-                        
-                        TextField("I'm doing this because...", text: $userAffirmation, axis: .vertical)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .lineLimit(3...5)
-                        
-                        Text("This will be used for motivation throughout your journey")
-                            .font(.caption)
                             .foregroundColor(.secondary)
+                        TextEditor(text: $userAffirmation)
+                            .frame(height: 80)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemBackground))
+                                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                            )
+                            .overlay(
+                                Group {
+                                    if userAffirmation.isEmpty {
+                                        Text("Write your personal motivation here...")
+                                            .foregroundColor(.secondary)
+                                            .padding(.horizontal, 12)
+                                            .padding(.top, 8)
+                                            .allowsHitTesting(false)
+                                    }
+                                }, alignment: .topLeading
+                            )
                     }
-                }
-                
-                // NEW: Journal Mode Selection
-                Section("Journaling Style") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Choose your journaling approach")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                        
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.ultraThinMaterial)
+                            .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
+                    )
+                    // Journal Mode Card
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Image(systemName: "book.closed.fill")
+                                .foregroundColor(.purple)
+                                .font(.title2)
+                            Text("Journal Mode")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                        }
                         Picker("Journal Mode", selection: $journalMode) {
                             ForEach(JournalMode.allCases, id: \.self) { mode in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(mode.displayName)
-                                        .font(.body)
-                                    Text(mode.description)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .tag(mode)
+                                Text(mode.displayName).tag(mode)
                             }
                         }
                         .pickerStyle(SegmentedPickerStyle())
-                        
-                        Text("This setting can be changed later in Settings")
+                        Text(journalMode.description)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                }
-                
-                // NEW: Preview section for future start dates
-                if startDate > Date() {
-                    Section("Challenge Preview") {
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.ultraThinMaterial)
+                            .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
+                    )
+                    // Challenge Preview Card (if future start)
+                    if startDate > Date() {
                         let daysUntilStart = Calendar.current.dateComponents([.day], from: Date(), to: startDate).day ?? 0
-                        
                         VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "calendar.badge.plus")
+                                    .foregroundColor(.blue)
+                                    .font(.title2)
+                                Text("Challenge Preview")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                            }
                             Text("Your challenge starts in \(daysUntilStart) days")
                                 .font(.headline)
                                 .foregroundColor(.blue)
-                            
                             Text("End Date: \(Calendar.current.date(byAdding: .day, value: duration-1, to: startDate) ?? startDate, style: .date)")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
+                        .padding(20)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(.ultraThinMaterial)
+                                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
+                        )
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
             }
-            .navigationTitle("Challenge Settings")
+            .navigationTitle("Edit Challenge")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -792,7 +832,6 @@ struct ChallengeConfigView: View {
                         dismiss()
                     }
                 }
-                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         let settings = challengeSettings ?? ChallengeSettings(startDate: startDate, duration: duration)
@@ -801,7 +840,6 @@ struct ChallengeConfigView: View {
                         settings.goalWaterOunces = goalWaterOunces
                         settings.userAffirmation = userAffirmation
                         settings.journalMode = journalMode
-                        
                         onSave(settings)
                         dismiss()
                     }

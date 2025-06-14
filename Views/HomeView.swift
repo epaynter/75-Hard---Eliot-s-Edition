@@ -18,8 +18,8 @@ struct HomeView: View {
                     // Progress Section
                     VStack(spacing: 16) {
                         Text("Day \(dayNumber()) of 75")
-                            .font(.largeTitle)
-                            .bold()
+                            .font(.titleLarge)
+                            .fontWeight(.semibold)
                         
                         ZStack {
                             Circle()
@@ -67,8 +67,8 @@ struct HomeView: View {
                     // Checklist Section
                     VStack(spacing: 16) {
                         Text("Today's Tasks")
-                            .font(.title2)
-                            .bold()
+                            .font(.titleMedium)
+                            .fontWeight(.medium)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal)
                         

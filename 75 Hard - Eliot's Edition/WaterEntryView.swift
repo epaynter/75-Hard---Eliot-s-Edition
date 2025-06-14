@@ -61,7 +61,7 @@ struct WaterEntryView: View {
                         // Current Amount Display
                         VStack(spacing: 12) {
                             Text("\(Int(tempWaterAmount)) oz")
-                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .font(.system(size: 40, weight: .semibold, design: .monospaced))
                                 .foregroundStyle(progressGradient)
                             
                             Text("of \(Int(viewModel.challengeSettings?.goalWaterOunces ?? 128)) oz goal")
