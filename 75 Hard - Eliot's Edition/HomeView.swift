@@ -44,159 +44,27 @@ struct HomeView: View {
         NavigationStack {
             ZStack {
                 // Background
-                heroGradient
+                Color(.systemBackground)
                     .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // NEW: Check if challenge is in preview mode (future start date)
-                        if let settings = viewModel.challengeSettings, settings.hasFutureStart {
-                            // Preview Mode Layout
-                            VStack(spacing: 24) {
-                                // Preview Header
-                                VStack(spacing: 16) {
-                                    Image(systemName: "calendar.badge.clock")
-                                        .font(.system(size: 60))
-                                        .foregroundStyle(progressGradient)
-                                    
-                                    Text("Your challenge starts in")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.secondary)
-                                    
-                                    Text("\(settings.daysUntilStart)")
-                                        .font(.system(size: 60, weight: .semibold, design: .monospaced))
-                                        .foregroundStyle(progressGradient)
-                                    
-                                    Text(settings.daysUntilStart == 1 ? "day" : "days")
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.secondary)
-                                    
-                                    VStack(spacing: 8) {
-                                        Text("Start Date: \(settings.startDate, style: .date)")
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                        
-                                        if !settings.userAffirmation.isEmpty {
-                                            Text("Your Why: \"\(settings.userAffirmation)\"")
-                                                .font(.body)
-                                                .italic()
-                                                .multilineTextAlignment(.center)
-                                                .foregroundColor(.primary)
-                                                .padding(.horizontal)
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal)
-                                .padding(.top, 8)
-                                
-                                // Preview Challenge Overview
-                                PreviewChallengeCard()
-                                
-                                // Motivational Quote Section
-                                MotivationalCard()
-                                
-                                // Preview Actions
-                                VStack(spacing: 16) {
-                                    Button("Update Challenge Settings") {
-                                        showingSettings = true
-                                    }
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.blue)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.blue, lineWidth: 2)
-                                    )
-                                    
-                                    Button("Start Challenge Today") {
-                                        startChallengeToday()
-                                    }
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(progressGradient)
-                                            .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-                                    )
-                                }
-                                .padding(.horizontal)
-                            }
-                        } else {
-                            // Regular Challenge Mode Layout (existing code)
-                            // Hero Header
-                            VStack(spacing: 16) {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("DAY \(viewModel.currentDay)")
-                                            .font(.system(size: 40, weight: .semibold, design: .monospaced))
-                                            .foregroundStyle(
-                                                LinearGradient(
-                                                    colors: [.blue, .purple],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                )
-                                            )
-                                        
-                                        Text("of \(viewModel.totalDays)")
-                                            .font(.title2)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    // Day Navigation
-                                    DayNavigationControls(viewModel: viewModel) {
-                                        showingDayNavigation = true
-                                    }
-                                }
-                                
-                                // Challenge Title & Motivation
-                                VStack(spacing: 8) {
-                                    // NEW: Rotating motivational messages instead of static "Lock In"
-                                    Text(getMotivationalMessage())
-                                        .font(.title)
-                                        .fontWeight(.black)
-                                        .tracking(3)
-                                        .multilineTextAlignment(.center)
-                                        .lineLimit(2)
-                                    
-                                    if !Calendar.current.isDateInToday(viewModel.selectedDate) {
-                                        Text(viewModel.selectedDate, style: .date)
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                            
-                            // Progress Overview
-                            ProgressOverviewCard(viewModel: viewModel)
-                            
-                            // Daily Checklist
-                            ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry, showingPhotoDetail: $showingPhotoDetail)
-                            
-                            // Quick Actions
-                            QuickActionsCard(
-                                showingCamera: $showingCamera,
-                                showingJournal: $showingJournal,
-                                showingCalendar: $showingCalendar
-                            )
-                            
-                            // Motivational Quote Section
-                            MotivationalCard()
+                        // Header Card - Matching Screenshot
+                        HeaderCard(viewModel: viewModel) {
+                            showingDayNavigation = true
                         }
+                        
+                        // Circular Progress Card - Matching Screenshot
+                        CircularProgressCard(viewModel: viewModel)
+                        
+                        // Daily Checklist
+                        ChecklistCard(viewModel: viewModel, showingWaterEntry: $showingWaterEntry, showingPhotoDetail: $showingPhotoDetail)
+                        
+                        // Motivational Quote Section
+                        MotivationalCard(viewModel: viewModel)
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 100) // Increased padding for custom tab bar
+                    .padding(.bottom, 100) // Padding for custom tab bar
                 }
             }
             .onAppear {
@@ -331,6 +199,189 @@ struct DayNavigationControls: View {
             .disabled(!viewModel.canNavigateToNextDay())
             .opacity(viewModel.canNavigateToNextDay() ? 1.0 : 0.3)
         }
+    }
+}
+
+// New HeaderCard matching the screenshot
+struct HeaderCard: View {
+    @ObservedObject var viewModel: ChecklistViewModel
+    let onJumpTap: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Day counter
+            HStack {
+                Text("Day \(viewModel.currentDay) of 75")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            
+            // Main title and navigation
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Let's lock")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    
+                    HStack(spacing: 4) {
+                        Text("in today")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.blue, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                        
+                        // Plant emoji
+                        Text("🌱")
+                            .font(.title)
+                    }
+                }
+                
+                Spacer()
+                
+                // Navigation controls
+                HStack(spacing: 12) {
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            viewModel.navigateToPreviousDay()
+                        }
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(.blue)
+                            )
+                    }
+                    .disabled(!viewModel.canNavigateToPreviousDay())
+                    .opacity(viewModel.canNavigateToPreviousDay() ? 1.0 : 0.3)
+                    
+                    Button(action: onJumpTap) {
+                        VStack(spacing: 2) {
+                            Image(systemName: "calendar")
+                                .font(.caption)
+                            Text("Jump")
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(.blue)
+                        .frame(width: 44, height: 44)
+                    }
+                    
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            viewModel.navigateToNextDay()
+                        }
+                    }) {
+                        Image(systemName: "chevron.right")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(.blue)
+                            )
+                    }
+                    .disabled(!viewModel.canNavigateToNextDay())
+                    .opacity(viewModel.canNavigateToNextDay() ? 1.0 : 0.3)
+                }
+            }
+        }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemGray6))
+        )
+    }
+}
+
+// New CircularProgressCard matching the screenshot
+struct CircularProgressCard: View {
+    @ObservedObject var viewModel: ChecklistViewModel
+    
+    private var completedTasks: Int {
+        var count = 0
+        if viewModel.hasRead { count += 1 }
+        if viewModel.workoutsCompleted >= 2 { count += 1 }
+        if viewModel.waterOunces >= (viewModel.challengeSettings?.goalWaterOunces ?? 128.0) { count += 1 }
+        if viewModel.hasSleep { count += 1 }
+        if viewModel.hasAllSupplementsTaken { count += 1 }
+        if viewModel.hasPhoto { count += 1 }
+        if viewModel.hasJournaled { count += 1 }
+        return count
+    }
+    
+    private var totalTasks: Int { 7 }
+    
+    private var progressPercentage: Double {
+        Double(completedTasks) / Double(totalTasks)
+    }
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Progress text
+            Text("You've completed \(completedTasks) of \(totalTasks) tasks")
+                .font(.title2)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+            
+            // Circular progress indicator
+            ZStack {
+                // Background circle
+                Circle()
+                    .stroke(Color(.systemGray5), lineWidth: 8)
+                    .frame(width: 120, height: 120)
+                
+                // Progress circle
+                Circle()
+                    .trim(from: 0, to: progressPercentage)
+                    .stroke(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                    )
+                    .frame(width: 120, height: 120)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.spring(response: 1.0, dampingFraction: 0.8), value: progressPercentage)
+                
+                // Percentage text
+                Text("\(Int(progressPercentage * 100))%")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            }
+            
+            // Motivational message
+            Text("Every journey starts with a single step! 🚀")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.primary)
+        }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
     }
 }
 
@@ -855,23 +906,106 @@ struct ModernQuickActionButton: View {
 }
 
 struct MotivationalCard: View {
-    private let quotes = [
-        // UPDATED: More stoic quotes from disciplined leaders
-        "Stay hard. - David Goggins",
-        "Discipline equals freedom. - Jocko Willink", 
-        "The path to success is massive, determined action. - Tony Robbins",
-        "You are in danger of living a life so comfortable that you will die without realizing your true potential. - David Goggins",
-        "Good. - Jocko Willink",
-        "Extreme ownership. - Jocko Willink",
-        "Progress equals happiness. - Tony Robbins",
-        "The only person you are destined to become is the person you decide to be. - Ralph Waldo Emerson",
-        "Don't limit your challenges, challenge your limits.",
-        "If you want to be uncommon amongst uncommon people, you have to do what they won't do. - David Goggins",
-        "The cave you fear to enter holds the treasure you seek. - Joseph Campbell",
-        "What we do now echoes in eternity. - Marcus Aurelius",
-        "You control your effort. You control your attitude. You control your response.",
-        "The impediment to action advances action. What stands in the way becomes the way. - Marcus Aurelius"
-    ]
+    @ObservedObject var viewModel: ChecklistViewModel
+    
+    private func getMotivationalHeadline(for day: Int) -> String {
+        let headlines = [
+            // Days 1-10: Starting Strong
+            "Day 1: Mental Toughness Begins",
+            "Day 2: You chose the hard path. Prove yourself right.",
+            "Day 3: Discipline > Motivation",
+            "Day 4: Champions are built in the grind",
+            "Day 5: Your future self is counting on you",
+            "Day 6: Comfort is the enemy of greatness",
+            "Day 7: Week 1 complete. You're already uncommon.",
+            "Day 8: Every rep counts. Every choice matters.",
+            "Day 9: The pain you feel today builds tomorrow's strength",
+            "Day 10: Double digits. You're not the same person who started.",
+            
+            // Days 11-20: Building Momentum
+            "Day 11: Momentum is your new best friend",
+            "Day 12: When it gets hard, you get harder",
+            "Day 13: Lucky 13. Superstitions don't stop champions.",
+            "Day 14: Two weeks of proof you can do hard things",
+            "Day 15: Halfway through your first month of transformation",
+            "Day 16: Your comfort zone is now in your rearview mirror",
+            "Day 17: Excellence is not an act, but a habit",
+            "Day 18: The person you're becoming is worth the pain",
+            "Day 19: Mental toughness is your superpower",
+            "Day 20: You've done the impossible 20 times in a row",
+            
+            // Days 21-30: First Month
+            "Day 21: Habits are forming. You're rewiring your brain.",
+            "Day 22: The grind doesn't get easier, you get stronger",
+            "Day 23: Your discipline is becoming legendary",
+            "Day 24: Almost a month of choosing hard over easy",
+            "Day 25: Quarter century of commitment to excellence",
+            "Day 26: You're not just surviving, you're thriving",
+            "Day 27: The compound effect is working in your favor",
+            "Day 28: Four weeks of proving yourself right",
+            "Day 29: Tomorrow marks one month of mental toughness",
+            "Day 30: 30 days of choosing yourself. This is who you are now.",
+            
+            // Days 31-40: Deepening
+            "Day 31: Month 2 begins. You're a different person now.",
+            "Day 32: Your old self wouldn't recognize you",
+            "Day 33: The hardest battles are won in the mind",
+            "Day 34: You're building character with every choice",
+            "Day 35: Five weeks of relentless commitment",
+            "Day 36: Your willpower is now your weapon",
+            "Day 37: The struggle is where strength is born",
+            "Day 38: You've normalized doing extraordinary things",
+            "Day 39: Mental fortitude is your new identity",
+            "Day 40: 40 days of choosing growth over comfort",
+            
+            // Days 41-50: Mid-Challenge Power
+            "Day 41: You're in the zone where legends are made",
+            "Day 42: Six weeks of proving impossible is just an opinion",
+            "Day 43: Your consistency is your competitive advantage",
+            "Day 44: The person in the mirror is a warrior",
+            "Day 45: 45 days of mental toughness mastery",
+            "Day 46: You've broken through every excuse",
+            "Day 47: Your discipline inspires others",
+            "Day 48: You're living proof that ordinary people do extraordinary things",
+            "Day 49: 49 days of choosing hard. You're unstoppable.",
+            "Day 50: Halfway there. Your transformation is undeniable.",
+            
+            // Days 51-60: Pushing Through
+            "Day 51: The second half begins. Champions finish strong.",
+            "Day 52: Your mental strength is now unbreakable",
+            "Day 53: You've silenced every doubt",
+            "Day 54: Eight weeks of choosing excellence",
+            "Day 55: You're operating on a different level now",
+            "Day 56: Your commitment has become your identity",
+            "Day 57: The grind has made you extraordinary",
+            "Day 58: You've mastered the art of not quitting",
+            "Day 59: 59 days of proving your word is bond",
+            "Day 60: 60 days of mental toughness. You're elite.",
+            
+            // Days 61-70: The Final Stretch
+            "Day 61: The final push begins. Champions finish.",
+            "Day 62: Your transformation is almost complete",
+            "Day 63: Nine weeks of choosing hard over easy",
+            "Day 64: You've rewritten your story",
+            "Day 65: Your discipline has become your superpower",
+            "Day 66: Two weeks left. This is when legends separate.",
+            "Day 67: You've conquered every excuse and obstacle",
+            "Day 68: Your commitment level is now legendary",
+            "Day 69: 69 days of proving you don't quit",
+            "Day 70: One week remains. You can taste victory.",
+            
+            // Days 71-75: Victory Lap
+            "Day 71: The final week. Champions finish strong.",
+            "Day 72: Three days left. Your transformation is complete.",
+            "Day 73: You've become everything you said you would.",
+            "Day 74: Tomorrow you join the 1% who finished.",
+            "Day 75: CHAMPION. You did what most people can't. You finished."
+        ]
+        
+        // Ensure we don't go out of bounds
+        let index = min(max(day - 1, 0), headlines.count - 1)
+        return headlines[index]
+    }
     
     var body: some View {
         VStack(spacing: 16) {
@@ -886,8 +1020,8 @@ struct MotivationalCard: View {
                 .frame(height: 1)
                 .frame(maxWidth: 40)
             
-            // FIXED: Proper SwiftUI modifiers for quote text
-            Text(quotes.randomElement() ?? quotes[0])
+            // Dynamic challenge-specific headline
+            Text(getMotivationalHeadline(for: viewModel.currentDay))
                 .font(.system(.body, design: .serif, weight: .medium))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.primary)
